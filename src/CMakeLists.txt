@@ -107,7 +107,13 @@ endif()
 
 if (ENABLE_OGLRENDERER)
     find_package(PkgConfig REQUIRED)
-    pkg_check_modules(EPOXY REQUIRED epoxy)
+    #pkg_check_modules(EPOXY REQUIRED epoxy)
+    
+    set(EPOXY_INCLUDE_DIRS  /workspace/melonDS/cmake/Modules/empoxy/include
+                            /workspace/melonDS/cmake/Modules/empoxy/build/include
+                            /workspace/melonDS/cmake/Modules/empoxy/src
+                            /workspace/melonDS/cmake/Modules/empoxy/build/src)
+    set(EPOXY_LIBRARIES     epoxy)
 
     target_include_directories(core PRIVATE ${EPOXY_INCLUDE_DIRS})
     if (WIN32)

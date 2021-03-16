@@ -61,13 +61,6 @@ detect_architecture("__i386__" x86)
 detect_architecture("__arm__" ARM)
 detect_architecture("__aarch64__" ARM64)
 
-if (ARCHITECTURE STREQUAL x86_64 OR ARCHITECTURE STREQUAL ARM64)
-	option(ENABLE_JIT "Enable x64 JIT recompiler" ON)
-endif()
-
-if (ENABLE_JIT)
-	add_definitions(-DJIT_ENABLED)
-endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL Release)
 	option(ENABLE_LTO "Enable link-time optimization" ON)
@@ -115,7 +108,7 @@ if (ENABLE_LTO)
 	endif()
 endif()
 
-option(BUILD_QT_SDL "Build Qt/SDL frontend" ON)
+option(BUILD_QT_SDL "Build Qt/SDL frontend" OFF)
 
 add_subdirectory(src)
 
