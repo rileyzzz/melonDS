@@ -211,6 +211,15 @@ int main(int argc, char** argv)
     //     Frontend::Mic_SetExternalBuffer(micWavBuffer, micWavLength);
     // }
 
-    Input::JoystickID = Config::JoystickID;
-    Input::OpenJoystick();
+    //Input::JoystickID = Config::JoystickID;
+    //Input::OpenJoystick();
+
+
+    int res = Frontend::LoadROM("mkds.nds", Frontend::ROMSlot_NDS);
+
+    if (res == Frontend::Load_OK)
+    {
+        //emuThread->emuRun();
+        printf("ROM loaded, run emulator\n");
+    }
 }

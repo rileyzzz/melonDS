@@ -1,8 +1,12 @@
 project(em_sdl)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(EM_SDL_SOURCES
     main.cpp
-    
+    Platform.cpp
+
     ../Util_ROM.cpp
     ../Util_Video.cpp
     ../Util_Audio.cpp
@@ -33,7 +37,10 @@ if(EMSCRIPTEN)
     message("emscripten epic stuff")
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
     
-    set(EM_FLAGS "-s USE_WEBGL2=1 -s USE_SDL=2 -s EXPORTED_FUNCTIONS='[\"_main\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' -s ALLOW_MEMORY_GROWTH=1")
+    # -s ALLOW_MEMORY_GROWTH=1
+    #-s USE_PTHREADS=1 -pthread --shared-memory --no-check-features -Wl
+
+    set(EM_FLAGS "-s USE_WEBGL2=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --preload-file /workspace/melonDS/firmware@/")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${EM_FLAGS}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EM_FLAGS}")
 
