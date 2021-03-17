@@ -61,12 +61,16 @@ detect_architecture("__i386__" x86)
 detect_architecture("__arm__" ARM)
 detect_architecture("__aarch64__" ARM64)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Emscripten")
 
-if (CMAKE_BUILD_TYPE STREQUAL Release)
-	option(ENABLE_LTO "Enable link-time optimization" ON)
-else()
-	option(ENABLE_LTO "Enable link-time optimization" OFF)
 endif()
+
+option(ENABLE_LTO "Enable link-time optimization" OFF)
+#if (CMAKE_BUILD_TYPE STREQUAL Release)
+	#option(ENABLE_LTO "Enable link-time optimization" ON)
+#else()
+	#option(ENABLE_LTO "Enable link-time optimization" OFF)
+#endif()
 
 option(ENABLE_OGLRENDERER "Enable OpenGL renderer" ON)
 
@@ -109,9 +113,14 @@ if (ENABLE_LTO)
 endif()
 
 option(BUILD_QT_SDL "Build Qt/SDL frontend" OFF)
+option(BUILD_EM_SDL "Build Emscripten frontend" ON)
 
 add_subdirectory(src)
 
 if (BUILD_QT_SDL)
 	add_subdirectory(src/frontend/qt_sdl)
+endif()
+
+if (BUILD_EM_SDL)
+	add_subdirectory(src/frontend/emscripten)
 endif()

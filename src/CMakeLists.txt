@@ -113,6 +113,7 @@ if (ENABLE_OGLRENDERER)
                             /workspace/melonDS/cmake/Modules/empoxy/build/include
                             /workspace/melonDS/cmake/Modules/empoxy/src
                             /workspace/melonDS/cmake/Modules/empoxy/build/src)
+    target_link_directories(core PUBLIC /workspace/melonDS/cmake/Modules/empoxy/build/src)
     set(EPOXY_LIBRARIES     epoxy)
 
     target_include_directories(core PRIVATE ${EPOXY_INCLUDE_DIRS})
