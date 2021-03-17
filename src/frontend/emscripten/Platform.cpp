@@ -18,7 +18,7 @@
 #define closesocket close
 
 #include "Platform.h"
-//#include "PlatformConfig.h"
+#include "PlatformConfig.h"
 
 #ifndef INVALID_SOCKET
     #define INVALID_SOCKET  (socket_t)-1

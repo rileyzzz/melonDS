@@ -26,7 +26,7 @@
 #include "Wifi.h"
 #include "Platform.h"
 #include "Config.h"
-//#include "PlatformConfig.h"
+#include "PlatformConfig.h"
 
 bool RunningSomething;
 
@@ -50,8 +50,6 @@ u32 micExtBufferWritePos;
 u32 micWavLength;
 s16* micWavBuffer;
 
-
-#define AUDIO_VOLUME 128
 
 void audioCallback(void* data, Uint8* stream, int len)
 {
@@ -85,7 +83,7 @@ void audioCallback(void* data, Uint8* stream, int len)
     //     num_in = len_in-margin;
     // }
 
-    //Frontend::AudioOut_Resample(buf_in, num_in, (s16*)stream, len, AUDIO_VOLUME);
+    //Frontend::AudioOut_Resample(buf_in, num_in, (s16*)stream, len, Config::AudioVolume);
 }
 
 void micCallback(void* data, Uint8* stream, int len)
@@ -107,6 +105,18 @@ void micCallback(void* data, Uint8* stream, int len)
         memcpy(&micExtBuffer[micExtBufferWritePos], input, len*sizeof(s16));
         micExtBufferWritePos += len;
     }
+}
+
+void emuStop()
+{
+    RunningSomething = false;
+
+    Frontend::UnloadROM(Frontend::ROMSlot_NDS);
+    Frontend::UnloadROM(Frontend::ROMSlot_GBA);
+
+    //emit emuThread->windowEmuStop();
+
+    printf("Shutdown");
 }
 
 int main(int argc, char** argv)
@@ -173,7 +183,7 @@ int main(int argc, char** argv)
         printf("Audio output frequency: %d Hz\n", audioFreq);
         SDL_PauseAudioDevice(audioDevice, 1);
     }
-
+    printf("init mic");
     memset(&whatIwant, 0, sizeof(SDL_AudioSpec));
     whatIwant.freq = 44100;
     whatIwant.format = AUDIO_S16LSB;
@@ -194,7 +204,9 @@ int main(int argc, char** argv)
     memset(micExtBuffer, 0, sizeof(micExtBuffer));
     micExtBufferWritePos = 0;
     micWavBuffer = nullptr;
-    //Platform::Init(argc, argv);
+
+    printf("Platform init");
+    Platform::Init(argc, argv);
 
     Frontend::Init_ROM();
     Frontend::EnableCheats(0);
@@ -222,4 +234,6 @@ int main(int argc, char** argv)
         //emuThread->emuRun();
         printf("ROM loaded, run emulator\n");
     }
+    else
+        printf("ROM load failed, error %d", res);
 }

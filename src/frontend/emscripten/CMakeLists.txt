@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(EM_SDL_SOURCES
     main.cpp
     Platform.cpp
+    PlatformConfig.cpp
 
     ../Util_ROM.cpp
     ../Util_Video.cpp
