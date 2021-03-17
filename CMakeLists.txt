@@ -16,6 +16,11 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+#emscripten options and other fun stuff
+if(EMSCRIPTEN)
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+endif()
+
 set(MELONDS_VERSION "0.9.1")
 add_compile_definitions(MELONDS_VERSION="${MELONDS_VERSION}")
 string(REPLACE "." ";" VERSION_LIST ${MELONDS_VERSION})
@@ -60,10 +65,6 @@ detect_architecture("__x86_64__" x86_64)
 detect_architecture("__i386__" x86)
 detect_architecture("__arm__" ARM)
 detect_architecture("__aarch64__" ARM64)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Emscripten")
-
-endif()
 
 option(ENABLE_LTO "Enable link-time optimization" OFF)
 #if (CMAKE_BUILD_TYPE STREQUAL Release)

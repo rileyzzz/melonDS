@@ -1,7 +1,12 @@
 project(em_sdl)
 
 set(EM_SDL_SOURCES
-    main.cpp)
+    main.cpp
+    
+    ../Util_ROM.cpp
+    ../Util_Video.cpp
+    ../Util_Audio.cpp
+    ../FrontendUtil.h)
 
 find_package(Threads REQUIRED)
 find_package(PkgConfig REQUIRED)
@@ -14,10 +19,31 @@ find_package(PkgConfig REQUIRED)
 
 add_executable(melonDS ${EM_SDL_SOURCES})
 
+
+#this is a mess LOL
+set(EPOXY_INCLUDE_DIRS  /workspace/melonDS/cmake/Modules/empoxy/include
+                        /workspace/melonDS/cmake/Modules/empoxy/build/include
+                        /workspace/melonDS/cmake/Modules/empoxy/src
+                        /workspace/melonDS/cmake/Modules/empoxy/build/src)
+
+set(EPOXY_LIBRARY_DIRS /workspace/melonDS/cmake/Modules/empoxy/build/src)
+
+#emscripten options and other fun stuff
+if(EMSCRIPTEN)
+    message("emscripten epic stuff")
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    
+    set(EM_FLAGS "-s USE_WEBGL2=1 -s USE_SDL=2 -s EXPORTED_FUNCTIONS='[\"_main\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' -s ALLOW_MEMORY_GROWTH=1")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${EM_FLAGS}")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EM_FLAGS}")
+
+    #set_target_properties(melonDS PROPERTIES LINK_FLAGS "-s USE_WEBGL2=1 -s EXPORTED_FUNCTIONS='[\"_main\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' -s ALLOW_MEMORY_GROWTH=1 --preload-file /workspace/melonDS/src/data@/")
+endif()
+
 #target_include_directories(melonDS PRIVATE ${SDL2_INCLUDE_DIRS} ${SLIRP_INCLUDE_DIRS} ${LIBARCHIVE_INCLUDE_DIRS})
-target_include_directories(melonDS PRIVATE ${SDL2_INCLUDE_DIRS})
+target_include_directories(melonDS PRIVATE ${SDL2_INCLUDE_DIRS} ${EPOXY_INCLUDE_DIRS})
 #target_link_directories(melonDS PRIVATE ${SDL2_LIBRARY_DIRS} ${SLIRP_LIBRARY_DIRS} ${LIBARCHIVE_LIBRARY_DIRS})
-target_link_directories(melonDS PRIVATE ${SDL2_LIBRARY_DIRS})
+target_link_directories(melonDS PRIVATE ${SDL2_LIBRARY_DIRS} ${EPOXY_LIBRARY_DIRS})
 target_include_directories(melonDS PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(melonDS PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_include_directories(melonDS PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
@@ -27,11 +53,11 @@ target_link_libraries(melonDS core)
 target_link_libraries(melonDS ${SDL2_LIBRARIES})
 
 
-install(FILES ../../../net.kuribo64.melonDS.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
-install(FILES ../../../icon/melon_16x16.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/16x16/apps RENAME net.kuribo64.melonDS.png)
-install(FILES ../../../icon/melon_32x32.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/32x32/apps RENAME net.kuribo64.melonDS.png)
-install(FILES ../../../icon/melon_48x48.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/48x48/apps RENAME net.kuribo64.melonDS.png)
-install(FILES ../../../icon/melon_64x64.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/64x64/apps RENAME net.kuribo64.melonDS.png)
-install(FILES ../../../icon/melon_128x128.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps RENAME net.kuribo64.melonDS.png)
-install(FILES ../../../icon/melon_256x256.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps RENAME net.kuribo64.melonDS.png)
-install(TARGETS melonDS BUNDLE DESTINATION ${CMAKE_BINARY_DIR} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+#install(FILES ../../../net.kuribo64.melonDS.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
+#install(FILES ../../../icon/melon_16x16.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/16x16/apps RENAME net.kuribo64.melonDS.png)
+#install(FILES ../../../icon/melon_32x32.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/32x32/apps RENAME net.kuribo64.melonDS.png)
+#install(FILES ../../../icon/melon_48x48.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/48x48/apps RENAME net.kuribo64.melonDS.png)
+#install(FILES ../../../icon/melon_64x64.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/64x64/apps RENAME net.kuribo64.melonDS.png)
+#install(FILES ../../../icon/melon_128x128.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps RENAME net.kuribo64.melonDS.png)
+#install(FILES ../../../icon/melon_256x256.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps RENAME net.kuribo64.melonDS.png)
+#install(TARGETS melonDS BUNDLE DESTINATION ${CMAKE_BINARY_DIR} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
