@@ -46,6 +46,17 @@ private:
     int EmuPause;
     std::thread* _thread;
 
+
+    //render variables
+    bool hasOGL = true;
+    u32 mainScreenPos[3];
+    u32 nframes;
+    double perfCountsSec;
+    double lastTime;
+    double frameLimitError;
+    double lastMeasureTime;
+    char melontitle[100];
+
 public:
     int FrontBuffer = 0;
     std::mutex FrontBufferLock;
@@ -60,6 +71,8 @@ public:
 
     void start();
     void run();
+
+    void renderLoop();
 
     void emuRun();
     void emuPause();

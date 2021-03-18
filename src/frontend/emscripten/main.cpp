@@ -292,14 +292,19 @@ void EmuThread::deinitOpenGL()
 void EmuThread::start()
 {
     printf("starting emulator thread\n");
-    _thread = new std::thread( [this] { this->run(); } );
+    //_thread = new std::thread( [this] { this->run(); } );
+    run();
+}
+
+void main_loop()
+{
+    if(emuThread)
+        emuThread->renderLoop();
 }
 
 void EmuThread::run()
 {
-    bool hasOGL = true;
-    u32 mainScreenPos[3];
-
+    printf("ds init\n");
     NDS::Init();
 
     mainScreenPos[0] = 0;
@@ -315,6 +320,7 @@ void EmuThread::run()
     if (hasOGL)
     {
         //oglContext->makeCurrent(oglSurface);
+        printf("gl current\n");
         SDL_GL_MakeCurrent(window, glcontext);
         videoRenderer = Config::_3DRenderer;
     }
@@ -324,20 +330,44 @@ void EmuThread::run()
         videoRenderer = 0;
     }
 
+    printf("gpu init\n");
     GPU::InitRenderer(videoRenderer);
+    printf("render settings\n");
     GPU::SetRenderSettings(videoRenderer, videoSettings);
 
+    printf("input init\n");
     Input::Init();
 
-    u32 nframes = 0;
-    double perfCountsSec = 1.0 / SDL_GetPerformanceFrequency();
-    double lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
-    double frameLimitError = 0.0;
-    double lastMeasureTime = lastTime;
+    printf("render vars init\n");
+    nframes = 0;
+    perfCountsSec = 1.0 / SDL_GetPerformanceFrequency();
+    lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
+    frameLimitError = 0.0;
+    lastMeasureTime = lastTime;
 
-    char melontitle[100];
+    printf("loop setup\n");
+    emscripten_set_main_loop(main_loop, 0, 0);
+    // while (EmuRunning != 0)
+    // {
 
-    while (EmuRunning != 0)
+    // }
+
+    // EmuStatus = 0;
+
+    // GPU::DeInitRenderer();
+    // NDS::DeInit();
+    // //Platform::LAN_DeInit();
+
+    // if (hasOGL)
+    // {
+    //     //oglContext->doneCurrent();
+    //     //deinitOpenGL();
+    // }
+}
+
+void EmuThread::renderLoop()
+{
+    if(EmuRunning != 0)
     {
         Input::Process();
 
@@ -479,7 +509,7 @@ void EmuThread::run()
             MelonCap::Update();
 #endif // MELONCAP
 
-            if (EmuRunning == 0) break;
+            if (EmuRunning == 0) return;
 
             windowUpdate();
 
@@ -556,18 +586,6 @@ void EmuThread::run()
 
             SDL_Delay(75);
         }
-    }
-
-    EmuStatus = 0;
-
-    GPU::DeInitRenderer();
-    NDS::DeInit();
-    //Platform::LAN_DeInit();
-
-    if (hasOGL)
-    {
-        //oglContext->doneCurrent();
-        //deinitOpenGL();
     }
 }
 
@@ -801,21 +819,24 @@ int main(int argc, char** argv)
 
     //screenPanel = new ScreenPanelGL();
 
+    printf("create thread\n");
     emuThread = new EmuThread();
+    printf("start\n");
     emuThread->start();
+    printf("pause\n");
     emuThread->emuPause();
 
 
     printf("begin load\n");
-    int res = Frontend::LoadROM("mkds.nds", Frontend::ROMSlot_NDS);
+    // int res = Frontend::LoadROM("mkds.nds", Frontend::ROMSlot_NDS);
 
-    if (res == Frontend::Load_OK)
-    {
-        emuThread->emuRun();
-        printf("ROM loaded, run emulator\n");
-    }
-    else
-        printf("ROM load failed, error %d\n", res);
+    // if (res == Frontend::Load_OK)
+    // {
+    //     emuThread->emuRun();
+    //     printf("ROM loaded, run emulator\n");
+    // }
+    // else
+    //     printf("ROM load failed, error %d\n", res);
 
 
     //delete ScreenPanel;
