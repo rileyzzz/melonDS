@@ -38,7 +38,7 @@ struct Item
 
 std::deque<Item> ItemQueue;
 
-Shader* Shader;
+class Shader* Shader;
 GLint uScreenSize, uOSDPos, uOSDSize;
 GLfloat uScaleFactor;
 GLuint OSDVertexArray;
@@ -50,7 +50,7 @@ volatile bool Rendering;
 bool Init()
 {
 
-    Shader = new Shader(kScreenVS_OSD, kScreenFS_OSD);
+    Shader = new class Shader(kScreenVS_OSD, kScreenFS_OSD);
 
     GLuint pid = Shader->ID;
     glBindAttribLocation(pid, 0, "vPosition");
@@ -96,13 +96,13 @@ void DeInit()
     {
         Item& item = *it;
 
-        if (item.GLTextureLoaded && f) f->glDeleteTextures(1, &item.GLTexture);
+        if (item.GLTextureLoaded) glDeleteTextures(1, &item.GLTexture);
         if (item.Bitmap) delete[] item.Bitmap;
 
         it = ItemQueue.erase(it);
     }
 
-    if (f) delete Shader;
+    delete Shader;
 }
 
 
@@ -334,7 +334,7 @@ void Update()
         {
             Item& item = *it;
 
-            if (item.GLTextureLoaded && f) f->glDeleteTextures(1, &item.GLTexture);
+            if (item.GLTextureLoaded) glDeleteTextures(1, &item.GLTexture);
             if (item.Bitmap) delete[] item.Bitmap;
 
             it = ItemQueue.erase(it);
@@ -413,7 +413,8 @@ void DrawGL(float w, float h)
     Shader->use();
 
     glUniform2f(uScreenSize, w, h);
-    glUniform1f(uScaleFactor, mainWindow->devicePixelRatioF());
+    //glUniform1f(uScaleFactor, mainWindow->devicePixelRatioF());
+    glUniform1f(uScaleFactor, 1.0f);
 
     glBindBuffer(GL_ARRAY_BUFFER, OSDVertexBuffer);
     glBindVertexArray(OSDVertexArray);

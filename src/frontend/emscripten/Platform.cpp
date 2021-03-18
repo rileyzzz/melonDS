@@ -7,11 +7,14 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 
+#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <fstream>
 #include <filesystem>
 #include <thread>
 #include <mutex>
 //#include <semaphore>
+
+#define bsemaphore boost::interprocess::interprocess_semaphore
 
 #define socket_t    int
 #define sockaddr_t  struct sockaddr
@@ -119,32 +122,67 @@ void Thread_Wait(Thread* thread)
     ((std::thread*) thread)->join();
 }
 
-// Semaphore* Semaphore_Create()
+// class ESemaphore
 // {
-//     return (Semaphore*)new std::counting_semaphore();
-// }
+// private:
+//     std::mutex mtx;
+//     std::condition_variable cv;
+//     int count;
 
-// void Semaphore_Free(Semaphore* sema)
-// {
-//     delete (std::counting_semaphore*) sema;
-// }
+// public:
+//     ESemaphore(int count_ = 0) : count(count_) { }
 
-// void Semaphore_Reset(Semaphore* sema)
-// {
-//     std::counting_semaphore* s = (std::counting_semaphore*) sema;
+//     inline void notify( int tid )
+//     {
+//         std::unique_lock<std::mutex> lock(mtx);
+//         count++;
+//         //notify the waiting thread
+//         cv.notify_one();
+//     }
 
-//     s->acquire(s->available());
-// }
+//     inline void wait( int tid )
+//     {
+//         std::unique_lock<std::mutex> lock(mtx);
+//         while(count == 0) {
+//             //wait on the mutex until notify is called
+//             cv.wait(lock);
+//             //cout << "thread " << tid << " run" << endl;
+//         }
+//         count--;
+//     }
+// };
 
-// void Semaphore_Wait(Semaphore* sema)
-// {
-//     ((std::counting_semaphore*) sema)->acquire();
-// }
 
-// void Semaphore_Post(Semaphore* sema, int count)
-// {
-//     ((std::counting_semaphore*) sema)->release(count);
-// }
+Semaphore* Semaphore_Create()
+{
+    return (Semaphore*)new bsemaphore(0);
+}
+
+void Semaphore_Free(Semaphore* sema)
+{
+    delete (bsemaphore*) sema;
+}
+
+void Semaphore_Reset(Semaphore* sema)
+{
+    bsemaphore* s = (bsemaphore*) sema;
+    while(s->try_wait());
+    
+    //s->acquire(s->available());
+}
+
+void Semaphore_Wait(Semaphore* sema)
+{
+    ((bsemaphore*) sema)->wait();
+}
+
+void Semaphore_Post(Semaphore* sema, int count)
+{
+    for(int i = 0; i < count; i++)
+        ((bsemaphore*) sema)->post();
+    
+    //((bsemaphore*) sema)->post(count);
+}
 
 Mutex* Mutex_Create()
 {

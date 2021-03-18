@@ -7,6 +7,7 @@
 #include <SDL2/SDL.h>
 
 #include "Shader.h"
+#include "FrontendUtil.h"
 
 #ifndef MAIN_H
 #define MAIN_H

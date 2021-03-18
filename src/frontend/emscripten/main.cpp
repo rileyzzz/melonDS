@@ -12,6 +12,7 @@
 #endif
 
 #include "main.h"
+#include "Input.h"
 
 #include "FrontendUtil.h"
 #include "OSD.h"
@@ -55,6 +56,33 @@ u32 micExtBufferWritePos;
 
 u32 micWavLength;
 s16* micWavBuffer;
+
+void micProcess()
+{
+    int type = Config::MicInputType;
+    bool cmd = Input::HotkeyDown(HK_Mic);
+
+    if (type != 1 && !cmd)
+    {
+        type = 0;
+    }
+
+    switch (type)
+    {
+    case 0: // no mic
+        Frontend::Mic_FeedSilence();
+        break;
+
+    case 1: // host mic
+    case 3: // WAV
+        Frontend::Mic_FeedExternalBuffer();
+        break;
+
+    case 2: // white noise
+        Frontend::Mic_FeedNoise();
+        break;
+    }
+}
 
 ScreenPanelGL::ScreenPanelGL()
 {
@@ -238,7 +266,7 @@ void windowUpdate()
     //SDL_GL_SwapBuffers();
 }
 
-EmuThread()
+EmuThread::EmuThread()
 {
     EmuStatus = 0;
     EmuRunning = 2;
@@ -347,24 +375,24 @@ void EmuThread::run()
             // update render settings if needed
             if (videoSettingsDirty)
             {
-                if (hasOGL != mainWindow->hasOGL)
-                {
-                    hasOGL = mainWindow->hasOGL;
-#ifdef OGLRENDERER_ENABLED
-                    if (hasOGL)
-                    {
-                        //oglContext->makeCurrent(oglSurface);
-                        SDL_GL_MakeCurrent(window, glcontext);
-                        videoRenderer = Config::_3DRenderer;
-                    }
-                    else
-#endif
-                    {
-                        videoRenderer = 0;
-                    }
-                }
-                else
-                    videoRenderer = hasOGL ? Config::_3DRenderer : 0;
+//                 if (hasOGL != mainWindow->hasOGL)
+//                 {
+//                     hasOGL = mainWindow->hasOGL;
+// #ifdef OGLRENDERER_ENABLED
+//                     if (hasOGL)
+//                     {
+//                         //oglContext->makeCurrent(oglSurface);
+//                         SDL_GL_MakeCurrent(window, glcontext);
+//                         videoRenderer = Config::_3DRenderer;
+//                     }
+//                     else
+// #endif
+//                     {
+//                         videoRenderer = 0;
+//                     }
+//                 }
+//                 else
+//                     videoRenderer = hasOGL ? Config::_3DRenderer : 0;
 
                 videoSettingsDirty = false;
 
@@ -679,7 +707,7 @@ int main(int argc, char** argv)
         printf("SDL BROKE!!!!!!!\n");
         return 1;
     }
-    window = SDL_CreateWindow("emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Config::WindowWidth, Config::windowHeight, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL);
     
     SDL_JoystickEventState(SDL_ENABLE);
 
