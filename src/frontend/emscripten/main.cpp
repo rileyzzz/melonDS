@@ -29,6 +29,9 @@
 #include "Config.h"
 #include "PlatformConfig.h"
 
+//shaders
+#include "Shader.h"
+
 bool RunningSomething;
 
 class EmuThread* emuThread;
@@ -61,7 +64,7 @@ class ScreenPanelGL
 
     bool touching;
 
-    QOpenGLShaderProgram* screenShader;
+    Shader* screenShader;
     GLuint screenVertexBuffer;
     GLuint screenVertexArray;
     GLuint screenTexture;
@@ -98,19 +101,20 @@ public:
 
         glClearColor(0, 0, 0, 1);
 
-        screenShader = new QOpenGLShaderProgram(this);
-        screenShader->addShaderFromSourceCode(QOpenGLShader::Vertex, kScreenVS);
-        screenShader->addShaderFromSourceCode(QOpenGLShader::Fragment, kScreenFS);
+        //screenShader = new QOpenGLShaderProgram(this);
+        //screenShader->addShaderFromSourceCode(QOpenGLShader::Vertex, kScreenVS);
+        //screenShader->addShaderFromSourceCode(QOpenGLShader::Fragment, kScreenFS);
+        screenShader = new Shader(kScreenVS, kScreenFS);
 
-        GLuint pid = screenShader->programId();
+        GLuint pid = screenShader->ID;
         glBindAttribLocation(pid, 0, "vPosition");
         glBindAttribLocation(pid, 1, "vTexcoord");
         glBindFragDataLocation(pid, 0, "oColor");
 
-        screenShader->link();
+        //screenShader->link();
 
-        screenShader->bind();
-        screenShader->setUniformValue("ScreenTex", (GLint)0);
+        screenShader->use();
+        screenShader->setInt("ScreenTex", (GLint)0);
         screenShader->release();
 
         // to prevent bleeding between both parts of the screen
@@ -174,10 +178,10 @@ public:
 
         if (emuThread)
         {
-            screenShader->bind();
+            screenShader->use();
 
-            screenShader->setUniformValue("uScreenSize", (float)w, (float)h);
-            screenShader->setUniformValue("uScaleFactor", factor);
+            screenShader->setVec2("uScreenSize", (float)w, (float)h);
+            screenShader->setFloat("uScaleFactor", factor);
 
             emuThread->FrontBufferLock.lock();
             int frontbuf = emuThread->FrontBuffer;
