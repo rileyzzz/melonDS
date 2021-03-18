@@ -5,9 +5,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(EM_SDL_SOURCES
     main.cpp
+    main_shaders.h
     Platform.cpp
     PlatformConfig.cpp
-
+    OSD.cpp
+    OSD_shaders.h
+    font.h
+    
     ../Util_ROM.cpp
     ../Util_Video.cpp
     ../Util_Audio.cpp

@@ -22,12 +22,12 @@ public:
         unsigned int vertex, fragment;
         // vertex shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex, 1, vertexSource, NULL);
+        glShaderSource(vertex, 1, &vertexSource, NULL);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
         // fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, fragmentSource, NULL);
+        glShaderSource(fragment, 1, &fragmentSource, NULL);
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
 
@@ -133,6 +133,10 @@ public:
     inline void release()
     {
         glUseProgram(0);
+    }
+    inline GLint uniformLocation(const char* name)
+    {
+        return glGetUniformLocation(ID, name);
     }
     // utility uniform functions
     // ------------------------------------------------------------------------

@@ -1,0 +1,50 @@
+
+
+#ifndef OSD_SHADERS_H
+#define OSD_SHADERS_H
+
+const char* kScreenVS_OSD = R"(#version 140
+
+uniform vec2 uScreenSize;
+
+uniform ivec2 uOSDPos;
+uniform ivec2 uOSDSize;
+uniform float uScaleFactor;
+
+in vec2 vPosition;
+
+smooth out vec2 fTexcoord;
+
+void main()
+{
+    vec4 fpos;
+
+    vec2 osdpos = (vPosition * vec2(uOSDSize * uScaleFactor));
+    fTexcoord = osdpos;
+    osdpos += uOSDPos;
+
+    fpos.xy = ((osdpos * 2.0) / uScreenSize * uScaleFactor) - 1.0;
+    fpos.y *= -1;
+    fpos.z = 0.0;
+    fpos.w = 1.0;
+
+    gl_Position = fpos;
+}
+)";
+
+const char* kScreenFS_OSD = R"(#version 140
+
+uniform sampler2D OSDTex;
+
+smooth in vec2 fTexcoord;
+
+out vec4 oColor;
+
+void main()
+{
+    vec4 pixel = texelFetch(OSDTex, ivec2(fTexcoord), 0);
+    oColor = pixel.bgra;
+}
+)";
+
+#endif // OSD_SHADERS_H
