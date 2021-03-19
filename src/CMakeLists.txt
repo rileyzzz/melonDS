@@ -134,7 +134,7 @@ endif()
 
 #emscripten options and other fun stuff
 if(EMSCRIPTEN)
-    set(EM_CORE_FLAGS "-s USE_WEBGL2=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread") # -Wl --shared-memory
+    set(EM_CORE_FLAGS "-s USE_WEBGL2=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread") # -Wl --shared-memory
     #set_target_properties(core PROPERTIES LINK_FLAGS ${EM_CORE_FLAGS})
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${EM_CORE_FLAGS}")

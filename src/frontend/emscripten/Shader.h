@@ -1,9 +1,10 @@
 
 //#include <glm/glm.hpp>
 #include <SDL2/SDL.h>
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
+// #include <GL/glew.h>
+// #include <GL/gl.h>
+// #include <GL/glu.h>
+#include <OpenGLSupport.h>
 
 #include <string>
 #include <iostream>
