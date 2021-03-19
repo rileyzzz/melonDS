@@ -1170,9 +1170,17 @@ void GLRenderer::RenderFrame()
     ShaderConfig.uFogShift = RenderFogShift;
 
     glBindBuffer(GL_UNIFORM_BUFFER, ShaderConfigUBO);
+#ifndef __EMSCRIPTEN__
     void* unibuf = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
     if (unibuf) memcpy(unibuf, &ShaderConfig, sizeof(ShaderConfig));
     glUnmapBuffer(GL_UNIFORM_BUFFER);
+#else
+    //void* unibuf = glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(ShaderConfig), GL_WRITE_ONLY);
+    void* unibuf = glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(ShaderConfig), GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
+    if (unibuf) memcpy(unibuf, &ShaderConfig, sizeof(ShaderConfig));
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
+    //glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ShaderConfig), &ShaderConfig);
+#endif
 
     // SUCKY!!!!!!!!!!!!!!!!!!
     // TODO: detect when VRAM blocks are modified!
@@ -1308,9 +1316,17 @@ u32* GLRenderer::GetLine(int line)
 
     if (line == 0)
     {
+#ifndef __EMSCRIPTEN__
         u8* data = (u8*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
         if (data) memcpy(&Framebuffer[stride*0], data, 4*stride*192);
         glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+#else
+        //u8* data = (u8*)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, 4*stride*192, GL_READ_ONLY);
+        u8* data = (u8*)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, 4*stride*192, GL_MAP_READ_BIT);
+        if (data) memcpy(&Framebuffer[stride*0], data, 4*stride*192);
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+        //glBufferSubData(GL_PIXEL_PACK_BUFFER, 0, sizeof(ShaderConfig), &ShaderConfig);
+#endif
     }
 
     u64* ptr = (u64*)&Framebuffer[stride * line];

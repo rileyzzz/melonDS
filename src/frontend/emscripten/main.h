@@ -34,7 +34,7 @@ public:
     //void resizeEvent(QResizeEvent* event) override;
     void resizeGL(int w, int h);
 private:
-    void setupScreenLayout();
+    void setupScreenLayout(int w, int h);
 };
 
 class EmuThread

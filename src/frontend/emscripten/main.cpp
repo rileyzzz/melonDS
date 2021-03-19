@@ -114,6 +114,8 @@ void ScreenPanelGL::initializeGL()
     printf("OpenGL: renderer: %s\n", renderer);
     printf("OpenGL: version: %s\n", version);
 
+    setupScreenLayout(Config::WindowWidth, Config::WindowHeight);
+
     glClearColor(0, 0, 0, 1);
 
     //screenShader = new QOpenGLShaderProgram(this);
@@ -124,7 +126,7 @@ void ScreenPanelGL::initializeGL()
     GLuint pid = screenShader->ID;
     glBindAttribLocation(pid, 0, "vPosition");
     glBindAttribLocation(pid, 1, "vTexcoord");
-    glBindFragDataLocation(pid, 0, "oColor");
+    //glBindFragDataLocation(pid, 0, "oColor");
 
     //screenShader->link();
 
@@ -200,7 +202,7 @@ void ScreenPanelGL::paintGL()
 
         emuThread->FrontBufferLock.lock();
         int frontbuf = emuThread->FrontBuffer;
-        glActiveTexture(GL_TEXTURE0);
+        //glActiveTexture(GL_TEXTURE0);
 
     #ifdef OGLRENDERER_ENABLED
         if (GPU::Renderer != 0)
@@ -236,6 +238,7 @@ void ScreenPanelGL::paintGL()
 
         for (int i = 0; i < numScreens; i++)
         {
+            printf("draw arrays\n");
             glUniformMatrix2x3fv(transloc, 1, GL_TRUE, screenMatrix[i]);
             glDrawArrays(GL_TRIANGLES, screenKind[i] == 0 ? 0 : 2*3, 2*3);
         }
@@ -257,14 +260,38 @@ void ScreenPanelGL::resizeGL(int w, int h)
 
 }
 
-void ScreenPanelGL::setupScreenLayout()
+void ScreenPanelGL::setupScreenLayout(int w, int h)
 {
+    int sizing = Config::ScreenSizing;
+    if (sizing == 3) sizing = autoScreenSizing;
 
+    float aspectRatios[] =
+    {
+        1.f,
+        (16.f/9)/(4.f/3),
+        (21.f/9)/(4.f/3),
+        ((float)w/h)/(4.f/3)
+    };
+
+    Frontend::SetupScreenLayout(w, h,
+                                Config::ScreenLayout,
+                                Config::ScreenRotation,
+                                sizing,
+                                Config::ScreenGap,
+                                Config::IntegerScaling != 0,
+                                Config::ScreenSwap != 0,
+                                aspectRatios[Config::ScreenAspectTop],
+                                aspectRatios[Config::ScreenAspectBot]);
+
+    numScreens = Frontend::GetScreenTransforms(screenMatrix[0], screenKind);
+    printf("%d SCREENS", numScreens);
 }
 
 void windowUpdate()
 {
+    panelGL->paintGL();
     //SDL_GL_SwapBuffers();
+    SDL_GL_SwapWindow(window);
 }
 
 EmuThread::EmuThread()
@@ -301,6 +328,8 @@ void main_loop()
 {
     if(emuThread)
         emuThread->renderLoop();
+    
+    //SDL_Delay(50);
 }
 
 void EmuThread::run()
@@ -348,6 +377,8 @@ void EmuThread::run()
 
     printf("loop setup\n");
     emscripten_set_main_loop(main_loop, 0, 0);
+    //emscripten_set_main_loop(main_loop, 60, 0);
+
     // while (EmuRunning != 0)
     // {
 
@@ -486,7 +517,7 @@ void EmuThread::renderLoop()
                 FrontBufferLock.unlock();
             }
 #endif
-
+            //printf("frame\n");
             // emulate
             u32 nlines = NDS::RunFrame();
 
@@ -600,8 +631,8 @@ void EmuThread::emuRun()
 
     // checkme
     //emit windowEmuStart();
-    if (audioDevice) SDL_PauseAudioDevice(audioDevice, 0);
-    if (micDevice)   SDL_PauseAudioDevice(micDevice, 0);
+    //if (audioDevice) SDL_PauseAudioDevice(audioDevice, 0);
+    //if (micDevice)   SDL_PauseAudioDevice(micDevice, 0);
 }
 
 void EmuThread::emuPause()
@@ -611,10 +642,10 @@ void EmuThread::emuPause()
 
     PrevEmuStatus = EmuRunning;
     EmuRunning = 2;
-    while (EmuStatus != 2);
+    //while (EmuStatus != 2);
 
-    if (audioDevice) SDL_PauseAudioDevice(audioDevice, 1);
-    if (micDevice)   SDL_PauseAudioDevice(micDevice, 1);
+    //if (audioDevice) SDL_PauseAudioDevice(audioDevice, 1);
+    //if (micDevice)   SDL_PauseAudioDevice(micDevice, 1);
 }
 
 void EmuThread::emuUnpause()
@@ -626,8 +657,8 @@ void EmuThread::emuUnpause()
 
     EmuRunning = PrevEmuStatus;
 
-    if (audioDevice) SDL_PauseAudioDevice(audioDevice, 0);
-    if (micDevice)   SDL_PauseAudioDevice(micDevice, 0);
+    //if (audioDevice) SDL_PauseAudioDevice(audioDevice, 0);
+    //if (micDevice)   SDL_PauseAudioDevice(micDevice, 0);
 }
 
 void EmuThread::emuStop()
@@ -635,8 +666,8 @@ void EmuThread::emuStop()
     EmuRunning = 0;
     EmuPause = 0;
 
-    if (audioDevice) SDL_PauseAudioDevice(audioDevice, 1);
-    if (micDevice)   SDL_PauseAudioDevice(micDevice, 1);
+    //if (audioDevice) SDL_PauseAudioDevice(audioDevice, 1);
+    //if (micDevice)   SDL_PauseAudioDevice(micDevice, 1);
 }
 
 
@@ -831,15 +862,15 @@ int main(int argc, char** argv)
 
 
     printf("begin load\n");
-    // int res = Frontend::LoadROM("mkds.nds", Frontend::ROMSlot_NDS);
+    int res = Frontend::LoadROM("mkds.nds", Frontend::ROMSlot_NDS);
 
-    // if (res == Frontend::Load_OK)
-    // {
-    //     emuThread->emuRun();
-    //     printf("ROM loaded, run emulator\n");
-    // }
-    // else
-    //     printf("ROM load failed, error %d\n", res);
+    if (res == Frontend::Load_OK)
+    {
+        emuThread->emuRun();
+        printf("ROM loaded, run emulator\n");
+    }
+    else
+        printf("ROM load failed, error %d\n", res);
 
 
     //delete ScreenPanel;

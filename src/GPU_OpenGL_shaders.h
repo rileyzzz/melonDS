@@ -20,6 +20,8 @@
 #define GPU_OPENGL_SHADERS_H
 
 const char* kCompositorVS = R"(#version 300 es
+precision mediump float;
+precision mediump int;
 
 in vec2 vPosition;
 in vec2 vTexcoord;
@@ -39,12 +41,14 @@ void main()
 )";
 
 const char* kCompositorFS_Nearest = R"(#version 300 es
+precision mediump float;
+precision mediump int;
 
 uniform uint u3DScale;
 uniform int u3DXPos;
 
-uniform sampler2D ScreenTex;
-uniform sampler2D _3DTex;
+uniform mediump usampler2D ScreenTex;
+uniform mediump sampler2D _3DTex;
 
 smooth in mediump vec2 fTexcoord;
 
@@ -166,11 +170,13 @@ void main()
 
 
 const char* kCompositorFS_Linear = R"(#version 300 es
+precision mediump float;
+precision mediump int;
 
 uniform uint u3DScale;
 
-uniform sampler2D ScreenTex;
-uniform sampler2D _3DTex;
+uniform mediump usampler2D ScreenTex;
+uniform mediump sampler2D _3DTex;
 
 smooth in vec2 fTexcoord;
 
@@ -326,6 +332,8 @@ void main()
 // HUGE TEST ZONE ARRLGD
 
 const char* kCompositorVS_xBRZ = R"(#version 300 es
+precision mediump float;
+precision mediump int;
 
 #define BLEND_NONE 0
 #define BLEND_NORMAL 1
@@ -407,6 +415,8 @@ void main()
 )";
 
 const char* kCompositorFS_xBRZ = R"(#version 300 es
+precision mediump float;
+precision mediump int;
 
 #define BLEND_NONE 0
 #define BLEND_NORMAL 1
@@ -439,8 +449,8 @@ precision mediump float;
 
 uniform uint u3DScale;
 
-uniform sampler2D ScreenTex;
-uniform sampler2D _3DTex;
+uniform mediump usampler2D ScreenTex;
+uniform mediump sampler2D _3DTex;
 
 smooth in vec2 fTexcoord;
 

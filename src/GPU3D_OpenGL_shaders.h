@@ -19,38 +19,38 @@
 #ifndef GPU3D_OPENGL_SHADERS_H
 #define GPU3D_OPENGL_SHADERS_H
 
-#define kShaderHeader "#version 140"
+#define kShaderHeader "#version 300 es\nprecision mediump float;\nprecision mediump int;"
 
 
 const char* kClearVS = kShaderHeader R"(
 
-in vec2 vPosition;
+in mediump vec2 vPosition;
 
 uniform uint uDepth;
 
 void main()
 {
-    float fdepth = (float(uDepth) / 8388608.0) - 1.0;
+    mediump float fdepth = (float(uDepth) / 8388608.0) - 1.0;
     gl_Position = vec4(vPosition, fdepth, 1.0);
 }
 )";
 
 const char* kClearFS = kShaderHeader R"(
 
-uniform uvec4 uColor;
+uniform mediump uvec4 uColor;
 uniform uint uOpaquePolyID;
 uniform uint uFogFlag;
 
-out vec4 oColor;
-out vec4 oAttr;
+layout(location=0) out mediump vec4 oColor;
+layout(location=1) out mediump vec4 oAttr;
 
 void main()
 {
     oColor = vec4(uColor).bgra / 31.0;
     oAttr.r = float(uOpaquePolyID) / 63.0;
-    oAttr.g = 0;
+    oAttr.g = 0.0;
     oAttr.b = float(uFogFlag);
-    oAttr.a = 1;
+    oAttr.a = 1.0;
 }
 )";
 
@@ -58,7 +58,7 @@ void main()
 
 const char* kFinalPassVS = kShaderHeader R"(
 
-in vec2 vPosition;
+in mediump vec2 vPosition;
 
 void main()
 {
@@ -69,8 +69,8 @@ void main()
 
 const char* kFinalPassEdgeFS = kShaderHeader R"(
 
-uniform sampler2D DepthBuffer;
-uniform sampler2D AttrBuffer;
+uniform mediump sampler2D DepthBuffer;
+uniform mediump sampler2D AttrBuffer;
 
 layout(std140) uniform uConfig
 {
@@ -84,7 +84,7 @@ layout(std140) uniform uConfig
     int uFogShift;
 };
 
-out vec4 oColor;
+layout(location=0) out mediump vec4 oColor;
 
 // make up for crapo zbuffer precision
 bool isless(float a, float b)
@@ -92,7 +92,7 @@ bool isless(float a, float b)
     return a < b;
 
     // a < b
-    float diff = a - b;
+    mediump float diff = a - b;
     return diff < (256.0 / 16777216.0);
 }
 
@@ -109,24 +109,24 @@ bool isgood(vec4 attr, float depth, int refPolyID, float refDepth)
 void main()
 {
     ivec2 coord = ivec2(gl_FragCoord.xy);
-    int scale = 1;//int(uScreenSize.x / 256);
+    int scale = 1;//int(uScreenSize.x / 256.0);
 
-    vec4 ret = vec4(0,0,0,0);
-    vec4 depth = texelFetch(DepthBuffer, coord, 0);
-    vec4 attr = texelFetch(AttrBuffer, coord, 0);
+    mediump vec4 ret = vec4(0,0,0,0);
+    mediump vec4 depth = texelFetch(DepthBuffer, coord, 0);
+    mediump vec4 attr = texelFetch(AttrBuffer, coord, 0);
 
     int polyid = int(attr.r * 63.0);
 
-    if (attr.g != 0)
+    if (attr.g != 0.0)
     {
-        vec4 depthU = texelFetch(DepthBuffer, coord + ivec2(0,-scale), 0);
-        vec4 attrU = texelFetch(AttrBuffer, coord + ivec2(0,-scale), 0);
-        vec4 depthD = texelFetch(DepthBuffer, coord + ivec2(0,scale), 0);
-        vec4 attrD = texelFetch(AttrBuffer, coord + ivec2(0,scale), 0);
-        vec4 depthL = texelFetch(DepthBuffer, coord + ivec2(-scale,0), 0);
-        vec4 attrL = texelFetch(AttrBuffer, coord + ivec2(-scale,0), 0);
-        vec4 depthR = texelFetch(DepthBuffer, coord + ivec2(scale,0), 0);
-        vec4 attrR = texelFetch(AttrBuffer, coord + ivec2(scale,0), 0);
+        mediump vec4 depthU = texelFetch(DepthBuffer, coord + ivec2(0,-scale), 0);
+        mediump vec4 attrU = texelFetch(AttrBuffer, coord + ivec2(0,-scale), 0);
+        mediump vec4 depthD = texelFetch(DepthBuffer, coord + ivec2(0,scale), 0);
+        mediump vec4 attrD = texelFetch(AttrBuffer, coord + ivec2(0,scale), 0);
+        mediump vec4 depthL = texelFetch(DepthBuffer, coord + ivec2(-scale,0), 0);
+        mediump vec4 attrL = texelFetch(AttrBuffer, coord + ivec2(-scale,0), 0);
+        mediump vec4 depthR = texelFetch(DepthBuffer, coord + ivec2(scale,0), 0);
+        mediump vec4 attrR = texelFetch(AttrBuffer, coord + ivec2(scale,0), 0);
 
         if (isgood(attrU, depthU.r, polyid, depth.r) ||
             isgood(attrD, depthD.r, polyid, depth.r) ||
@@ -141,7 +141,7 @@ void main()
             if ((uDispCnt & (1<<4)) != 0)
                 ret.a = 0.5;
             else
-                ret.a = 1;
+                ret.a = 1.0;
         }
     }
 
@@ -151,8 +151,8 @@ void main()
 
 const char* kFinalPassFogFS = kShaderHeader R"(
 
-uniform sampler2D DepthBuffer;
-uniform sampler2D AttrBuffer;
+uniform mediump sampler2D DepthBuffer;
+uniform mediump sampler2D AttrBuffer;
 
 layout(std140) uniform uConfig
 {
@@ -166,7 +166,7 @@ layout(std140) uniform uConfig
     int uFogShift;
 };
 
-out vec4 oColor;
+layout(location=0) out vec4 oColor;
 
 vec4 CalculateFog(float depth)
 {
@@ -194,7 +194,7 @@ vec4 CalculateFog(float depth)
             densityfrac = int(udepth & uint(0x1FFFF));
     }
 
-    float density = mix(uFogDensity[densityid], uFogDensity[densityid+1], float(densityfrac)/131072.0);
+    mediump float density = mix(uFogDensity[densityid], uFogDensity[densityid+1], float(densityfrac)/131072.0);
 
     return vec4(density, density, density, density);
 }
@@ -203,11 +203,11 @@ void main()
 {
     ivec2 coord = ivec2(gl_FragCoord.xy);
 
-    vec4 ret = vec4(0,0,0,0);
-    vec4 depth = texelFetch(DepthBuffer, coord, 0);
-    vec4 attr = texelFetch(AttrBuffer, coord, 0);
+    mediump vec4 ret = vec4(0,0,0,0);
+    mediump vec4 depth = texelFetch(DepthBuffer, coord, 0);
+    mediump vec4 attr = texelFetch(AttrBuffer, coord, 0);
 
-    if (attr.b != 0) ret = CalculateFog(depth.r);
+    if (attr.b != 0.0) ret = CalculateFog(depth.r);
 
     oColor = ret;
 }
@@ -229,20 +229,20 @@ layout(std140) uniform uConfig
     int uFogShift;
 };
 
-in uvec4 vPosition;
-in uvec4 vColor;
+in mediump uvec4 vPosition;
+in mediump uvec4 vColor;
 in ivec2 vTexcoord;
 in ivec3 vPolygonAttr;
 
-smooth out vec4 fColor;
-smooth out vec2 fTexcoord;
+smooth out mediump vec4 fColor;
+smooth out mediump vec2 fTexcoord;
 flat out ivec3 fPolygonAttr;
 )";
 
 const char* kRenderFSCommon = R"(
 
-uniform usampler2D TexMem;
-uniform sampler2D TexPalMem;
+uniform mediump usampler2D TexMem;
+uniform mediump sampler2D TexPalMem;
 
 layout(std140) uniform uConfig
 {
@@ -256,12 +256,12 @@ layout(std140) uniform uConfig
     int uFogShift;
 };
 
-smooth in vec4 fColor;
-smooth in vec2 fTexcoord;
+smooth in mediump vec4 fColor;
+smooth in mediump vec2 fTexcoord;
 flat in ivec3 fPolygonAttr;
 
-out vec4 oColor;
-out vec4 oAttr;
+layout(location=0) out mediump vec4 oColor;
+layout(location=1) out mediump vec4 oAttr;
 
 int TexcoordWrap(int c, int maxc, int mode)
 {
@@ -289,7 +289,7 @@ vec4 TextureFetch_A3I5(ivec2 addr, ivec4 st, int wrapmode)
     pixel.r &= 0x1F;
 
     addr.y = (addr.y << 3) + pixel.r;
-    vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+    mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
 
     return vec4(color.rgb, float(pixel.a)/31.0);
 }
@@ -305,9 +305,9 @@ vec4 TextureFetch_I2(ivec2 addr, ivec4 st, int wrapmode, float alpha0)
     pixel.r &= 0x03;
 
     addr.y = (addr.y << 2) + pixel.r;
-    vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+    mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
 
-    return vec4(color.rgb, (pixel.r>0)?1:alpha0);
+    return vec4(color.rgb, (pixel.r>0)?1.0:alpha0);
 }
 
 vec4 TextureFetch_I4(ivec2 addr, ivec4 st, int wrapmode, float alpha0)
@@ -321,9 +321,9 @@ vec4 TextureFetch_I4(ivec2 addr, ivec4 st, int wrapmode, float alpha0)
     else                 pixel.r &= 0x0F;
 
     addr.y = (addr.y << 3) + pixel.r;
-    vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+    mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
 
-    return vec4(color.rgb, (pixel.r>0)?1:alpha0);
+    return vec4(color.rgb, (pixel.r>0)?1.0:alpha0);
 }
 
 vec4 TextureFetch_I8(ivec2 addr, ivec4 st, int wrapmode, float alpha0)
@@ -335,9 +335,9 @@ vec4 TextureFetch_I8(ivec2 addr, ivec4 st, int wrapmode, float alpha0)
     ivec4 pixel = ivec4(texelFetch(TexMem, ivec2(addr.x&0x3FF, addr.x>>10), 0));
 
     addr.y = (addr.y << 3) + pixel.r;
-    vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+    mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
 
-    return vec4(color.rgb, (pixel.r>0)?1:alpha0);
+    return vec4(color.rgb, (pixel.r>0)?1.0:alpha0);
 }
 
 vec4 TextureFetch_Compressed(ivec2 addr, ivec4 st, int wrapmode)
@@ -364,35 +364,35 @@ vec4 TextureFetch_Compressed(ivec2 addr, ivec4 st, int wrapmode)
 
     if (val == 0)
     {
-        vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+        mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
         return vec4(color.rgb, 1.0);
     }
     else if (val == 1)
     {
         addr.y++;
-        vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+        mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
         return vec4(color.rgb, 1.0);
     }
     else if (val == 2)
     {
         if (palinfo == 1)
         {
-            vec4 color0 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+            mediump vec4 color0 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
             addr.y++;
-            vec4 color1 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+            mediump vec4 color1 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
             return vec4((color0.rgb + color1.rgb) / 2.0, 1.0);
         }
         else if (palinfo == 3)
         {
-            vec4 color0 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+            mediump vec4 color0 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
             addr.y++;
-            vec4 color1 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+            mediump vec4 color1 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
             return vec4((color0.rgb*5.0 + color1.rgb*3.0) / 8.0, 1.0);
         }
         else
         {
             addr.y += 2;
-            vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+            mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
             return vec4(color.rgb, 1.0);
         }
     }
@@ -401,14 +401,14 @@ vec4 TextureFetch_Compressed(ivec2 addr, ivec4 st, int wrapmode)
         if (palinfo == 2)
         {
             addr.y += 3;
-            vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+            mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
             return vec4(color.rgb, 1.0);
         }
         else if (palinfo == 3)
         {
-            vec4 color0 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+            mediump vec4 color0 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
             addr.y++;
-            vec4 color1 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+            mediump vec4 color1 = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
             return vec4((color0.rgb*3.0 + color1.rgb*5.0) / 8.0, 1.0);
         }
         else
@@ -430,7 +430,7 @@ vec4 TextureFetch_A5I3(ivec2 addr, ivec4 st, int wrapmode)
     pixel.r &= 0x07;
 
     addr.y = (addr.y << 3) + pixel.r;
-    vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
+    mediump vec4 color = texelFetch(TexPalMem, ivec2(addr.y&0x3FF, addr.y>>10), 0);
 
     return vec4(color.rgb, float(pixel.a)/31.0);
 }
@@ -445,7 +445,7 @@ vec4 TextureFetch_Direct(ivec2 addr, ivec4 st, int wrapmode)
     addr.x++;
     ivec4 pixelH = ivec4(texelFetch(TexMem, ivec2(addr.x&0x3FF, addr.x>>10), 0));
 
-    vec4 color;
+    mediump vec4 color;
     color.r = float(pixelL.r & 0x1F) / 31.0;
     color.g = float((pixelL.r >> 5) | ((pixelH.r & 0x03) << 3)) / 31.0;
     color.b = float((pixelH.r & 0x7C) >> 2) / 31.0;
@@ -459,7 +459,7 @@ vec4 TextureLookup_Nearest(vec2 st)
     int attr = int(fPolygonAttr.y);
     int paladdr = int(fPolygonAttr.z);
 
-    float alpha0;
+    mediump float alpha0;
     if ((attr & (1<<29)) != 0) alpha0 = 0.0;
     else                       alpha0 = 1.0;
 
@@ -483,12 +483,12 @@ vec4 TextureLookup_Nearest(vec2 st)
 vec4 TextureLookup_Linear(vec2 texcoord)
 {
     ivec2 intpart = ivec2(texcoord);
-    vec2 fracpart = fract(texcoord);
+    mediump vec2 fracpart = fract(texcoord);
 
     int attr = int(fPolygonAttr.y);
     int paladdr = int(fPolygonAttr.z);
 
-    float alpha0;
+    mediump float alpha0;
     if ((attr & (1<<29)) != 0) alpha0 = 0.0;
     else                       alpha0 = 1.0;
 
@@ -499,7 +499,7 @@ vec4 TextureLookup_Linear(vec2 texcoord)
     ivec2 vramaddr = ivec2((attr & 0xFFFF) << 3, paladdr);
     int wrapmode = (attr >> 16);
 
-    vec4 A, B, C, D;
+    mediump vec4 A, B, C, D;
     int type = (attr >> 26) & 0x7;
     if (type == 5)
     {
@@ -551,8 +551,8 @@ vec4 TextureLookup_Linear(vec2 texcoord)
         D = TextureFetch_Direct(vramaddr, st_full + ivec4(1,1,0,0), wrapmode);
     }
 
-    float fx = fracpart.x;
-    vec4 AB;
+    mediump float fx = fracpart.x;
+    mediump vec4 AB;
     if (A.a < (0.5/31.0) && B.a < (0.5/31.0))
         AB = vec4(0);
     else
@@ -564,7 +564,7 @@ vec4 TextureLookup_Linear(vec2 texcoord)
     }
 
     fx = fracpart.x;
-    vec4 CD;
+    mediump vec4 CD;
     if (C.a < (0.5/31.0) && D.a < (0.5/31.0))
         CD = vec4(0);
     else
@@ -576,7 +576,7 @@ vec4 TextureLookup_Linear(vec2 texcoord)
     }
 
     fx = fracpart.y;
-    vec4 ret;
+    mediump vec4 ret;
     if (AB.a < (0.5/31.0) && CD.a < (0.5/31.0))
         ret = vec4(0);
     else
@@ -592,8 +592,8 @@ vec4 TextureLookup_Linear(vec2 texcoord)
 
 vec4 FinalColor()
 {
-    vec4 col;
-    vec4 vcol = fColor;
+    mediump vec4 col;
+    mediump vec4 vcol = fColor;
     int blendmode = (fPolygonAttr.x >> 4) & 0x3;
 
     if (blendmode == 2)
@@ -601,7 +601,7 @@ vec4 FinalColor()
         if ((uDispCnt & (1<<1)) == 0)
         {
             // toon
-            vec3 tooncolor = uToonColors[int(vcol.r * 31)].rgb;
+            mediump vec3 tooncolor = uToonColors[int(vcol.r * 31.0)].rgb;
             vcol.rgb = tooncolor;
         }
         else
@@ -618,7 +618,7 @@ vec4 FinalColor()
     }
     else
     {
-        vec4 tcol = TextureLookup_Nearest(fTexcoord);
+        mediump vec4 tcol = TextureLookup_Nearest(fTexcoord);
         //vec4 tcol = TextureLookup_Linear(fTexcoord);
 
         if ((blendmode & 1) != 0)
@@ -638,7 +638,7 @@ vec4 FinalColor()
     {
         if ((uDispCnt & (1<<1)) != 0)
         {
-            vec3 tooncolor = uToonColors[int(vcol.r * 31)].rgb;
+            mediump vec3 tooncolor = uToonColors[int(vcol.r * 31.0)].rgb;
             col.rgb = min(col.rgb + tooncolor, 1.0);
         }
     }
@@ -655,7 +655,7 @@ void main()
     int attr = vPolygonAttr.x;
     int zshift = (attr >> 16) & 0x1F;
 
-    vec4 fpos;
+    mediump vec4 fpos;
     fpos.xy = (((vec2(vPosition.xy) ) * 2.0) / uScreenSize) - 1.0;
     fpos.z = (float(vPosition.z << zshift) / 8388608.0) - 1.0;
     fpos.w = float(vPosition.w) / 65536.0f;
@@ -671,14 +671,14 @@ void main()
 
 const char* kRenderVS_W = R"(
 
-smooth out float fZ;
+smooth out mediump float fZ;
 
 void main()
 {
     int attr = vPolygonAttr.x;
     int zshift = (attr >> 16) & 0x1F;
 
-    vec4 fpos;
+    mediump vec4 fpos;
     fpos.xy = (((vec2(vPosition.xy) ) * 2.0) / uScreenSize) - 1.0;
     fZ = float(vPosition.z << zshift) / 16777216.0;
     fpos.w = float(vPosition.w) / 65536.0f;
@@ -697,31 +697,31 @@ const char* kRenderFS_ZO = R"(
 
 void main()
 {
-    vec4 col = FinalColor();
-    if (col.a < 30.5/31) discard;
+    mediump vec4 col = FinalColor();
+    if (col.a < 30.5/31.0) discard;
 
     oColor = col;
     oAttr.r = float((fPolygonAttr.x >> 24) & 0x3F) / 63.0;
-    oAttr.g = 0;
+    oAttr.g = 0.0;
     oAttr.b = float((fPolygonAttr.x >> 15) & 0x1);
-    oAttr.a = 1;
+    oAttr.a = 1.0;
 }
 )";
 
 const char* kRenderFS_WO = R"(
 
-smooth in float fZ;
+smooth in mediump float fZ;
 
 void main()
 {
-    vec4 col = FinalColor();
-    if (col.a < 30.5/31) discard;
+    mediump vec4 col = FinalColor();
+    if (col.a < 30.5/31.0) discard;
 
     oColor = col;
     oAttr.r = float((fPolygonAttr.x >> 24) & 0x3F) / 63.0;
-    oAttr.g = 0;
+    oAttr.g = 0.0;
     oAttr.b = float((fPolygonAttr.x >> 15) & 0x1);
-    oAttr.a = 1;
+    oAttr.a = 1.0;
     gl_FragDepth = fZ;
 }
 )";
@@ -730,25 +730,25 @@ const char* kRenderFS_ZE = R"(
 
 void main()
 {
-    vec4 col = FinalColor();
-    if (col.a < 30.5/31) discard;
+    mediump vec4 col = FinalColor();
+    if (col.a < 30.5/31.0) discard;
 
-    oAttr.g = 1;
-    oAttr.a = 1;
+    oAttr.g = 1.0;
+    oAttr.a = 1.0;
 }
 )";
 
 const char* kRenderFS_WE = R"(
 
-smooth in float fZ;
+smooth in mediump float fZ;
 
 void main()
 {
-    vec4 col = FinalColor();
-    if (col.a < 30.5/31) discard;
+    mediump vec4 col = FinalColor();
+    if (col.a < 30.5/31.0) discard;
 
-    oAttr.g = 1;
-    oAttr.a = 1;
+    oAttr.g = 1.0;
+    oAttr.a = 1.0;
     gl_FragDepth = fZ;
 }
 )";
@@ -757,29 +757,29 @@ const char* kRenderFS_ZT = R"(
 
 void main()
 {
-    vec4 col = FinalColor();
-    if (col.a < 0.5/31) discard;
-    if (col.a >= 30.5/31) discard;
+    mediump vec4 col = FinalColor();
+    if (col.a < 0.5/31.0) discard;
+    if (col.a >= 30.5/31.0) discard;
 
     oColor = col;
-    oAttr.b = 0;
-    oAttr.a = 1;
+    oAttr.b = 0.0;
+    oAttr.a = 1.0;
 }
 )";
 
 const char* kRenderFS_WT = R"(
 
-smooth in float fZ;
+smooth in mediump float fZ;
 
 void main()
 {
-    vec4 col = FinalColor();
-    if (col.a < 0.5/31) discard;
-    if (col.a >= 30.5/31) discard;
+    mediump vec4 col = FinalColor();
+    if (col.a < 0.5/31.0) discard;
+    if (col.a >= 30.5/31.0) discard;
 
     oColor = col;
-    oAttr.b = 0;
-    oAttr.a = 1;
+    oAttr.b = 0.0;
+    oAttr.a = 1.0;
     gl_FragDepth = fZ;
 }
 )";
@@ -794,7 +794,7 @@ void main()
 
 const char* kRenderFS_WSM = R"(
 
-smooth in float fZ;
+smooth in mediump float fZ;
 
 void main()
 {

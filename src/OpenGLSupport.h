@@ -22,9 +22,9 @@
 #include <stdio.h>
 #include <string.h>
 
-// #include <GL/glew.h>
-// #include <GL/gl.h>
-// #include <GL/glu.h>
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 // #define GL_GLEXT_PROTOTYPES
 // #include "SDL_opengl_glext.h"
@@ -32,11 +32,11 @@
 //#include <epoxy/gl.h>
 #include <SDL2/SDL.h>
 
-#define _EM_GLES3_
+// #define _EM_GLES3_
 
-#include <GLES3/gl32.h>
-#define GL_GLEXT_PROTOTYPES 1
-#include <GLES3/gl2ext.h>
+// #include <GLES3/gl32.h>
+// #define GL_GLEXT_PROTOTYPES 1
+// #include <GLES3/gl2ext.h>
 
 // #define glBindFragDataLocation(a, b, c) glBindFragDataLocationEXT(a, b, c)
 // #define glDepthRange(a, b) glDepthRangef(a, b)
@@ -47,16 +47,32 @@
 // #define GL_UNSIGNED_SHORT_1_5_5_5_REV GL_UNSIGNED_SHORT_1_5_5_5_REV_EXT
 // #define GL_BGRA GL_BGRA_EXT
 
-#define glFramebufferTexture(target, att, tex, level) glFramebufferTexture2D(target, att, GL_TEXTURE_2D, tex, level)
-#define glColorMaski(i, r, g, b, a) glColorMask(r, g, b, a)
 
-#define glMapBuffer(a, b) glMapBufferRange(a, b)
+#ifdef __EMSCRIPTEN__
+#include <GL/Regal.h>
+#include <emscripten.h>
+
+#define glFramebufferTexture(target, att, tex, level) glFramebufferTexture2D(target, att, GL_TEXTURE_2D, tex, level)
+//#define glColorMaski(i, r, g, b, a) glColorMask(r, g, b, a)
+#define glColorMaski(i, r, g, b, a)
+
+#define glBindFragDataLocation(a, b, c)
+//#define glMapBuffer(a, b) glMapBufferRange(a, b)
+//#define glMapBuffer(target, access) glMapBufferRange(target, 0, 0, access)
+#endif
+
+//#define glMapBuffer(a, b) glMapBufferRange(a, b)
+
+//GLES defines
+// #define glDepthRange(a, b) glDepthRangef(a, b)
+// #define glClearDepth(a) glClearDepthf(a)
+// #define glMapBuffer(a, b) glMapBufferOES(a, b)
 #define glDrawBuffer(a) const GLenum buffers[]{ a }; glDrawBuffers(1, buffers )
 
-#define glBindFragDataLocation(a, b, c) glBindFragDataLocationEXT(a, b, c)
+// #define glBindFragDataLocation(a, b, c) glBindFragDataLocationEXT(a, b, c)
 
-#define GL_UNSIGNED_SHORT_1_5_5_5_REV GL_UNSIGNED_SHORT_1_5_5_5_REV_EXT
-#define GL_BGRA GL_BGRA_EXT
+// #define GL_UNSIGNED_SHORT_1_5_5_5_REV GL_UNSIGNED_SHORT_1_5_5_5_REV_EXT
+// #define GL_BGRA GL_BGRA_EXT
 
 #include "Platform.h"
 

@@ -133,7 +133,7 @@ public:
     }
     inline void release()
     {
-        glUseProgram(0);
+        //glUseProgram(0);
     }
     inline GLint uniformLocation(const char* name)
     {

@@ -36,13 +36,16 @@ uniform sampler2D ScreenTex;
 
 smooth in mediump vec2 fTexcoord;
 
-out mediump vec4 oColor;
+//out mediump vec4 oColor;
 
 void main()
 {
     mediump vec4 pixel = texture(ScreenTex, fTexcoord);
 
-    oColor = vec4(pixel.bgr, 1.0);
+    //vec4 oColor = vec4(pixel.bgr, 1.0);
+    vec4 oColor = vec4(1.0, 0.0, 0.0, 1.0);
+
+    gl_FragColor = oColor;
 }
 )";
 
