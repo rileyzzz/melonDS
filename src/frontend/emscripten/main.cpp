@@ -90,7 +90,7 @@ ScreenPanelGL::ScreenPanelGL()
     printf("Initialize gl panel\n");
     touching = false;
     //screen = SDL_SetVideoMode(Config::WindowWidth, Config::WindowHeight, 0, SDL_OPENGL);
-    
+    initializeGL();
 }
 
 ScreenPanelGL::~ScreenPanelGL()
@@ -116,7 +116,8 @@ void ScreenPanelGL::initializeGL()
 
     setupScreenLayout(Config::WindowWidth, Config::WindowHeight);
 
-    glClearColor(0, 0, 0, 1);
+    //glClearColor(0, 0, 0, 1);
+    glClearColor(0, 1, 0, 1);
 
     //screenShader = new QOpenGLShaderProgram(this);
     //screenShader->addShaderFromSourceCode(QOpenGLShader::Vertex, kScreenVS);
@@ -238,7 +239,7 @@ void ScreenPanelGL::paintGL()
 
         for (int i = 0; i < numScreens; i++)
         {
-            printf("draw arrays\n");
+            //printf("draw arrays\n");
             glUniformMatrix2x3fv(transloc, 1, GL_TRUE, screenMatrix[i]);
             glDrawArrays(GL_TRIANGLES, screenKind[i] == 0 ? 0 : 2*3, 2*3);
         }
@@ -292,6 +293,7 @@ void windowUpdate()
     panelGL->paintGL();
     //SDL_GL_SwapBuffers();
     SDL_GL_SwapWindow(window);
+    //SDL_RenderPresent(renderer);
 }
 
 EmuThread::EmuThread()
