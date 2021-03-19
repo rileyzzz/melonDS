@@ -43,6 +43,7 @@ GPU::RenderSettings videoSettings;
 bool videoSettingsDirty;
 
 SDL_Window* window;
+SDL_Renderer* sdl_renderer;
 SDL_GLContext glcontext;
 
 SDL_AudioDeviceID audioDevice;
@@ -500,7 +501,9 @@ void EmuThread::renderLoop()
                 // this is hacky but this is the easiest way to call
                 // this function without dealling with a ton of
                 // macro mess
-                epoxy_glFlush();
+                //epoxy_glFlush();
+                glFlush();
+                //SDL_GL_SwapWindow(window);
             }
 #endif
             FrontBufferLock.unlock();
@@ -725,8 +728,6 @@ int main(int argc, char** argv)
         printf("SDL BROKE!!!!!!!\n");
         return 1;
     }
-    window = SDL_CreateWindow("emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL);
-    
     SDL_JoystickEventState(SDL_ENABLE);
 
     Config::Load();
@@ -751,6 +752,8 @@ int main(int argc, char** argv)
     SANITIZE(Config::ScreenAspectTop, 0, 4);
     SANITIZE(Config::ScreenAspectBot, 0, 4);
 #undef SANITIZE
+
+    SDL_CreateWindowAndRenderer(Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL, &window, &sdl_renderer);
 
     audioSync = SDL_CreateCond();
     audioSyncLock = SDL_CreateMutex();

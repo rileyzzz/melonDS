@@ -3,20 +3,20 @@
 #ifndef MAIN_SHADERS_H
 #define MAIN_SHADERS_H
 
-const char* kScreenVS = R"(#version 140
+const char* kScreenVS = R"(#version 300 es
 
-uniform vec2 uScreenSize;
+uniform mediump vec2 uScreenSize;
 uniform mat2x3 uTransform;
-uniform float uScaleFactor;
+uniform mediump float uScaleFactor;
 
-in vec2 vPosition;
-in vec2 vTexcoord;
+in mediump vec2 vPosition;
+in mediump vec2 vTexcoord;
 
-smooth out vec2 fTexcoord;
+smooth out mediump vec2 fTexcoord;
 
 void main()
 {
-    vec4 fpos;
+    mediump vec4 fpos;
 
     fpos.xy = vec3(vPosition, 1.0) * uTransform * uScaleFactor;
 
@@ -30,17 +30,17 @@ void main()
 }
 )";
 
-const char* kScreenFS = R"(#version 140
+const char* kScreenFS = R"(#version 300 es
 
 uniform sampler2D ScreenTex;
 
-smooth in vec2 fTexcoord;
+smooth in mediump vec2 fTexcoord;
 
-out vec4 oColor;
+out mediump vec4 oColor;
 
 void main()
 {
-    vec4 pixel = texture(ScreenTex, fTexcoord);
+    mediump vec4 pixel = texture(ScreenTex, fTexcoord);
 
     oColor = vec4(pixel.bgr, 1.0);
 }

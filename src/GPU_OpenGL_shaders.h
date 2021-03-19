@@ -19,7 +19,7 @@
 #ifndef GPU_OPENGL_SHADERS_H
 #define GPU_OPENGL_SHADERS_H
 
-const char* kCompositorVS = R"(#version 140
+const char* kCompositorVS = R"(#version 300 es
 
 in vec2 vPosition;
 in vec2 vTexcoord;
@@ -38,23 +38,23 @@ void main()
 }
 )";
 
-const char* kCompositorFS_Nearest = R"(#version 140
+const char* kCompositorFS_Nearest = R"(#version 300 es
 
 uniform uint u3DScale;
 uniform int u3DXPos;
 
-uniform usampler2D ScreenTex;
+uniform sampler2D ScreenTex;
 uniform sampler2D _3DTex;
 
-smooth in vec2 fTexcoord;
+smooth in mediump vec2 fTexcoord;
 
-out vec4 oColor;
+out mediump vec4 oColor;
 
 void main()
 {
     ivec4 pixel = ivec4(texelFetch(ScreenTex, ivec2(fTexcoord), 0));
 
-    float _3dxpos = float(u3DXPos);
+    mediump float _3dxpos = float(u3DXPos);
 
     ivec4 mbright = ivec4(texelFetch(ScreenTex, ivec2(256*3, int(fTexcoord.y)), 0));
     int dispmode = mbright.b & 0x3;
@@ -72,9 +72,9 @@ void main()
         {
             // 3D on top, blending
 
-            float xpos = fTexcoord.x + _3dxpos;
-            float ypos = mod(fTexcoord.y, 192);
-            ivec4 _3dpix = ivec4(texelFetch(_3DTex, ivec2(vec2(xpos, ypos)*u3DScale), 0).bgra
+            mediump float xpos = fTexcoord.x + _3dxpos;
+            mediump float ypos = mod(fTexcoord.y, 192.0);
+            ivec4 _3dpix = ivec4(texelFetch(_3DTex, ivec2(vec2(xpos, ypos)*float(u3DScale)), 0).bgra
                          * vec4(63,63,63,31));
 
             if (_3dpix.a > 0)
@@ -93,9 +93,9 @@ void main()
         {
             // 3D on bottom, blending
 
-            float xpos = fTexcoord.x + _3dxpos;
-            float ypos = mod(fTexcoord.y, 192);
-            ivec4 _3dpix = ivec4(texelFetch(_3DTex, ivec2(vec2(xpos, ypos)*u3DScale), 0).bgra
+            mediump float xpos = fTexcoord.x + _3dxpos;
+            mediump float ypos = mod(fTexcoord.y, 192.0);
+            ivec4 _3dpix = ivec4(texelFetch(_3DTex, ivec2(vec2(xpos, ypos)*float(u3DScale)), 0).bgra
                          * vec4(63,63,63,31));
 
             if (_3dpix.a > 0)
@@ -113,9 +113,9 @@ void main()
         {
             // 3D on top, normal/fade
 
-            float xpos = fTexcoord.x + _3dxpos;
-            float ypos = mod(fTexcoord.y, 192);
-            ivec4 _3dpix = ivec4(texelFetch(_3DTex, ivec2(vec2(xpos, ypos)*u3DScale), 0).bgra
+            mediump float xpos = fTexcoord.x + _3dxpos;
+            mediump float ypos = mod(fTexcoord.y, 192.0);
+            ivec4 _3dpix = ivec4(texelFetch(_3DTex, ivec2(vec2(xpos, ypos)*float(u3DScale)), 0).bgra
                          * vec4(63,63,63,31));
 
             if (_3dpix.a > 0)
@@ -165,11 +165,11 @@ void main()
 
 
 
-const char* kCompositorFS_Linear = R"(#version 140
+const char* kCompositorFS_Linear = R"(#version 300 es
 
 uniform uint u3DScale;
 
-uniform usampler2D ScreenTex;
+uniform sampler2D ScreenTex;
 uniform sampler2D _3DTex;
 
 smooth in vec2 fTexcoord;
@@ -255,11 +255,11 @@ void main()
         ivec4 val2 = ivec4(texelFetch(ScreenTex, ivec2(fTexcoord) + ivec2(256,0), 0));
         ivec4 val3 = ivec4(texelFetch(ScreenTex, ivec2(fTexcoord) + ivec2(512,0), 0));
 
-        float xfract = fract(fTexcoord.x);
-        float yfract = fract(fTexcoord.y);
+        mediump float xfract = fract(fTexcoord.x);
+        mediump float yfract = fract(fTexcoord.y);
 
-        float xpos = val3.r + xfract;
-        float ypos = mod(fTexcoord.y, 192);
+        mediump float xpos = val3.r + xfract;
+        mediump float ypos = mod(fTexcoord.y, 192);
         ivec4 _3dpix = Get3DPixel(vec2(xpos,ypos));
 
         ivec4 p00 = GetFullPixel(val1, val2, val3, _3dpix);
@@ -325,7 +325,7 @@ void main()
 
 // HUGE TEST ZONE ARRLGD
 
-const char* kCompositorVS_xBRZ = R"(#version 140
+const char* kCompositorVS_xBRZ = R"(#version 300 es
 
 #define BLEND_NONE 0
 #define BLEND_NORMAL 1
@@ -387,8 +387,8 @@ void main()
     //COL0 = COLOR;
     TEX0.xy = TexCoord.xy;
 	vec2 ps = vec2(1,1);//vec2(SourceSize.z, SourceSize.w);
-	float dx = ps.x;
-	float dy = ps.y;
+	mediump float dx = ps.x;
+	mediump float dy = ps.y;
 
 	 //  A1 B1 C1
 	// A0 A  B  C C4
@@ -406,7 +406,7 @@ void main()
 }
 )";
 
-const char* kCompositorFS_xBRZ = R"(#version 140
+const char* kCompositorFS_xBRZ = R"(#version 300 es
 
 #define BLEND_NONE 0
 #define BLEND_NORMAL 1
@@ -439,7 +439,7 @@ precision mediump float;
 
 uniform uint u3DScale;
 
-uniform usampler2D ScreenTex;
+uniform sampler2D ScreenTex;
 uniform sampler2D _3DTex;
 
 smooth in vec2 fTexcoord;

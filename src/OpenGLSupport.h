@@ -22,8 +22,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <epoxy/gl.h>
-
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+//#include <epoxy/gl.h>
+#include <SDL2/SDL.h>
 
 #include "Platform.h"
 
