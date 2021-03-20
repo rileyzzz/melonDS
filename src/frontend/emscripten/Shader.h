@@ -20,6 +20,7 @@ public:
 	GLuint ID;
     Shader(const char* vertexSource, const char* fragmentSource)
     {
+        //printf("FRONTEND SHADER SRC\nVERTEX:\n%s\nFRAGMENT:\n%s\n", vertexSource, fragmentSource);
         unsigned int vertex, fragment;
         // vertex shader
         vertex = glCreateShader(GL_VERTEX_SHADER);

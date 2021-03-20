@@ -26,8 +26,8 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
-// #define GL_GLEXT_PROTOTYPES
-// #include "SDL_opengl_glext.h"
+#define GL_GLEXT_PROTOTYPES
+#include "SDL_opengl_glext.h"
 
 //#include <epoxy/gl.h>
 #include <SDL2/SDL.h>
@@ -53,10 +53,11 @@
 #include <emscripten.h>
 
 #define glFramebufferTexture(target, att, tex, level) glFramebufferTexture2D(target, att, GL_TEXTURE_2D, tex, level)
-//#define glColorMaski(i, r, g, b, a) glColorMask(r, g, b, a)
-#define glColorMaski(i, r, g, b, a)
-
+//#define glColorMaski(i, r, g, b, a)
 #define glBindFragDataLocation(a, b, c)
+#define glDrawBuffer(a) const GLenum buffers[]{ a }; glDrawBuffers(1, buffers )
+
+#define glColorMaski(i, r, g, b, a) glColorMask(r, g, b, a)
 //#define glMapBuffer(a, b) glMapBufferRange(a, b)
 //#define glMapBuffer(target, access) glMapBufferRange(target, 0, 0, access)
 #endif
@@ -67,7 +68,7 @@
 // #define glDepthRange(a, b) glDepthRangef(a, b)
 // #define glClearDepth(a) glClearDepthf(a)
 // #define glMapBuffer(a, b) glMapBufferOES(a, b)
-#define glDrawBuffer(a) const GLenum buffers[]{ a }; glDrawBuffers(1, buffers )
+
 
 // #define glBindFragDataLocation(a, b, c) glBindFragDataLocationEXT(a, b, c)
 

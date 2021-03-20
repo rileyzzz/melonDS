@@ -19,12 +19,12 @@ void main()
 {
     mediump vec4 fpos;
 
-    mediump vec2 osdpos = (vPosition * vec2(uOSDSize * uScaleFactor));
+    mediump vec2 osdpos = (vPosition * vec2(vec2(uOSDSize) * uScaleFactor));
     fTexcoord = osdpos;
-    osdpos += uOSDPos;
+    osdpos += vec2(uOSDPos);
 
     fpos.xy = ((osdpos * 2.0) / uScreenSize * uScaleFactor) - 1.0;
-    fpos.y *= -1;
+    fpos.y *= -1.0;
     fpos.z = 0.0;
     fpos.w = 1.0;
 

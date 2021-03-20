@@ -58,6 +58,8 @@ u32 micExtBufferWritePos;
 u32 micWavLength;
 s16* micWavBuffer;
 
+bool globalHasOGL = true;
+
 void micProcess()
 {
     int type = Config::MicInputType;
@@ -186,10 +188,14 @@ void ScreenPanelGL::initializeGL()
 
 void ScreenPanelGL::paintGL()
 {
+    SDL_GL_MakeCurrent(window, glcontext);
+
+    //printf("paint gl\n");
     int w = Config::WindowWidth;
     int h = Config::WindowHeight;
     float factor = 1.0f;
 
+    glClearColor(0, 1, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glViewport(0, 0, w*factor, h*factor);
@@ -203,8 +209,8 @@ void ScreenPanelGL::paintGL()
 
         emuThread->FrontBufferLock.lock();
         int frontbuf = emuThread->FrontBuffer;
-        //glActiveTexture(GL_TEXTURE0);
-
+        glActiveTexture(GL_TEXTURE0);
+        //printf("bind output\n");
     #ifdef OGLRENDERER_ENABLED
         if (GPU::Renderer != 0)
         {
@@ -227,7 +233,7 @@ void ScreenPanelGL::paintGL()
                                 GL_UNSIGNED_BYTE, GPU::Framebuffer[frontbuf][1]);
             }
         }
-
+        //printf("finish bind output\n");
         GLint filter = Config::ScreenFilter ? GL_LINEAR : GL_NEAREST;
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
@@ -254,6 +260,8 @@ void ScreenPanelGL::paintGL()
 
     OSD::Update();
     OSD::DrawGL(w*factor, h*factor);
+
+    SDL_GL_SwapWindow(window);
 }
 
 void ScreenPanelGL::resizeGL(int w, int h)
@@ -285,14 +293,14 @@ void ScreenPanelGL::setupScreenLayout(int w, int h)
                                 aspectRatios[Config::ScreenAspectBot]);
 
     numScreens = Frontend::GetScreenTransforms(screenMatrix[0], screenKind);
-    printf("%d SCREENS", numScreens);
+    printf("%d SCREENS\n", numScreens);
 }
 
 void windowUpdate()
 {
     panelGL->paintGL();
     //SDL_GL_SwapBuffers();
-    SDL_GL_SwapWindow(window);
+    //SDL_GL_SwapWindow(window);
     //SDL_RenderPresent(renderer);
 }
 
@@ -309,34 +317,48 @@ EmuThread::EmuThread()
 
 void EmuThread::initOpenGL()
 {
-    glcontext = SDL_GL_CreateContext(window);
     panelGL = new ScreenPanelGL();
 }
 
 void EmuThread::deinitOpenGL()
 {
     delete panelGL;
-    SDL_GL_DeleteContext(glcontext);
+}
+
+void main_loop()
+{
+    panelGL->paintGL();
+
+    //if(emuThread)
+        //emuThread->renderLoop();
+    
+    //panelGL->paintGL();
+
+    //SDL_Delay(1000);
+}
+
+int emu_thread(void* ptr)
+{
+    emuThread->run();
+    return 0;
 }
 
 void EmuThread::start()
 {
     printf("starting emulator thread\n");
-    //_thread = new std::thread( [this] { this->run(); } );
-    run();
-}
-
-void main_loop()
-{
-    if(emuThread)
-        emuThread->renderLoop();
-    
-    //SDL_Delay(50);
+    _thread = new std::thread( [this] { this->run(); } );
+    _thread->detach();
+    //_thread = SDL_CreateThread(emu_thread, "EmuThread", nullptr);
+    emscripten_set_main_loop(main_loop, 0, 0);
+    //run();
 }
 
 void EmuThread::run()
 {
     printf("ds init\n");
+    bool hasOGL = true;
+    u32 mainScreenPos[3];
+
     NDS::Init();
 
     mainScreenPos[0] = 0;
@@ -352,7 +374,6 @@ void EmuThread::run()
     if (hasOGL)
     {
         //oglContext->makeCurrent(oglSurface);
-        printf("gl current\n");
         SDL_GL_MakeCurrent(window, glcontext);
         videoRenderer = Config::_3DRenderer;
     }
@@ -362,46 +383,20 @@ void EmuThread::run()
         videoRenderer = 0;
     }
 
-    printf("gpu init\n");
     GPU::InitRenderer(videoRenderer);
-    printf("render settings\n");
     GPU::SetRenderSettings(videoRenderer, videoSettings);
 
-    printf("input init\n");
     Input::Init();
 
-    printf("render vars init\n");
-    nframes = 0;
-    perfCountsSec = 1.0 / SDL_GetPerformanceFrequency();
-    lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
-    frameLimitError = 0.0;
-    lastMeasureTime = lastTime;
+    u32 nframes = 0;
+    double perfCountsSec = 1.0 / SDL_GetPerformanceFrequency();
+    double lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
+    double frameLimitError = 0.0;
+    double lastMeasureTime = lastTime;
 
-    printf("loop setup\n");
-    emscripten_set_main_loop(main_loop, 0, 0);
-    //emscripten_set_main_loop(main_loop, 60, 0);
+    char melontitle[100];
 
-    // while (EmuRunning != 0)
-    // {
-
-    // }
-
-    // EmuStatus = 0;
-
-    // GPU::DeInitRenderer();
-    // NDS::DeInit();
-    // //Platform::LAN_DeInit();
-
-    // if (hasOGL)
-    // {
-    //     //oglContext->doneCurrent();
-    //     //deinitOpenGL();
-    // }
-}
-
-void EmuThread::renderLoop()
-{
-    if(EmuRunning != 0)
+    while (EmuRunning != 0)
     {
         Input::Process();
 
@@ -439,24 +434,24 @@ void EmuThread::renderLoop()
             // update render settings if needed
             if (videoSettingsDirty)
             {
-//                 if (hasOGL != mainWindow->hasOGL)
-//                 {
-//                     hasOGL = mainWindow->hasOGL;
-// #ifdef OGLRENDERER_ENABLED
-//                     if (hasOGL)
-//                     {
-//                         //oglContext->makeCurrent(oglSurface);
-//                         SDL_GL_MakeCurrent(window, glcontext);
-//                         videoRenderer = Config::_3DRenderer;
-//                     }
-//                     else
-// #endif
-//                     {
-//                         videoRenderer = 0;
-//                     }
-//                 }
-//                 else
-//                     videoRenderer = hasOGL ? Config::_3DRenderer : 0;
+                if (hasOGL != globalHasOGL)
+                {
+                    hasOGL = globalHasOGL;
+#ifdef OGLRENDERER_ENABLED
+                    if (hasOGL)
+                    {
+                        //oglContext->makeCurrent(oglSurface);
+                        SDL_GL_MakeCurrent(window, glcontext);
+                        videoRenderer = Config::_3DRenderer;
+                    }
+                    else
+#endif
+                    {
+                        videoRenderer = 0;
+                    }
+                }
+                else
+                    videoRenderer = hasOGL ? Config::_3DRenderer : 0;
 
                 videoSettingsDirty = false;
 
@@ -506,7 +501,8 @@ void EmuThread::renderLoop()
                 if (guess != autoScreenSizing)
                 {
                     autoScreenSizing = guess;
-                    //emit screenLayoutChange();
+                    //screenLayoutChange();
+                    panelGL->setupScreenLayout(Config::WindowWidth, Config::WindowHeight);
                 }
             }
 
@@ -519,7 +515,7 @@ void EmuThread::renderLoop()
                 FrontBufferLock.unlock();
             }
 #endif
-            //printf("frame\n");
+
             // emulate
             u32 nlines = NDS::RunFrame();
 
@@ -536,7 +532,6 @@ void EmuThread::renderLoop()
                 // macro mess
                 //epoxy_glFlush();
                 glFlush();
-                //SDL_GL_SwapWindow(window);
             }
 #endif
             FrontBufferLock.unlock();
@@ -545,9 +540,9 @@ void EmuThread::renderLoop()
             MelonCap::Update();
 #endif // MELONCAP
 
-            if (EmuRunning == 0) return;
+            if (EmuRunning == 0) break;
 
-            windowUpdate();
+            //emit windowUpdate();
 
             bool fastforward = Input::HotkeyDown(HK_FastForward);
 
@@ -612,7 +607,7 @@ void EmuThread::renderLoop()
             lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
             lastMeasureTime = lastTime;
 
-            windowUpdate();
+            //emit windowUpdate();
 
             EmuStatus = EmuRunning;
 
@@ -623,6 +618,247 @@ void EmuThread::renderLoop()
             SDL_Delay(75);
         }
     }
+
+    // EmuStatus = 0;
+
+    // GPU::DeInitRenderer();
+    // NDS::DeInit();
+    // //Platform::LAN_DeInit();
+
+    // if (hasOGL)
+    // {
+    //     //oglContext->doneCurrent();
+    //     //deinitOpenGL();
+    // }
+}
+
+void EmuThread::renderLoop()
+{
+//    if(EmuRunning != 0)
+//    {
+//         Input::Process();
+
+//         // if (Input::HotkeyPressed(HK_FastForwardToggle)) emit windowLimitFPSChange();
+
+//         // if (Input::HotkeyPressed(HK_Pause)) emit windowEmuPause();
+//         // if (Input::HotkeyPressed(HK_Reset)) emit windowEmuReset();
+
+//         // if (Input::HotkeyPressed(HK_FullscreenToggle)) emit windowFullscreenToggle();
+
+//         // if (Input::HotkeyPressed(HK_SwapScreens)) emit swapScreensToggle();
+
+//         // if (GBACart::CartInserted && GBACart::HasSolarSensor)
+//         // {
+//         //     if (Input::HotkeyPressed(HK_SolarSensorDecrease))
+//         //     {
+//         //         if (GBACart_SolarSensor::LightLevel > 0) GBACart_SolarSensor::LightLevel--;
+//         //         char msg[64];
+//         //         sprintf(msg, "Solar sensor level set to %d", GBACart_SolarSensor::LightLevel);
+//         //         OSD::AddMessage(0, msg);
+//         //     }
+//         //     if (Input::HotkeyPressed(HK_SolarSensorIncrease))
+//         //     {
+//         //         if (GBACart_SolarSensor::LightLevel < 10) GBACart_SolarSensor::LightLevel++;
+//         //         char msg[64];
+//         //         sprintf(msg, "Solar sensor level set to %d", GBACart_SolarSensor::LightLevel);
+//         //         OSD::AddMessage(0, msg);
+//         //     }
+//         // }
+        
+//         if (EmuRunning == 1)
+//         {
+//             EmuStatus = 1;
+
+//             // update render settings if needed
+//             if (videoSettingsDirty)
+//             {
+// //                 if (hasOGL != mainWindow->hasOGL)
+// //                 {
+// //                     hasOGL = mainWindow->hasOGL;
+// // #ifdef OGLRENDERER_ENABLED
+// //                     if (hasOGL)
+// //                     {
+// //                         //oglContext->makeCurrent(oglSurface);
+// //                         SDL_GL_MakeCurrent(window, glcontext);
+// //                         videoRenderer = Config::_3DRenderer;
+// //                     }
+// //                     else
+// // #endif
+// //                     {
+// //                         videoRenderer = 0;
+// //                     }
+// //                 }
+// //                 else
+// //                     videoRenderer = hasOGL ? Config::_3DRenderer : 0;
+
+//                 videoSettingsDirty = false;
+
+//                 videoSettings.Soft_Threaded = Config::Threaded3D != 0;
+//                 videoSettings.GL_ScaleFactor = Config::GL_ScaleFactor;
+//                 videoSettings.GL_BetterPolygons = Config::GL_BetterPolygons;
+
+//                 GPU::SetRenderSettings(videoRenderer, videoSettings);
+//             }
+
+//             // process input and hotkeys
+//             NDS::SetKeyMask(Input::InputMask);
+
+//             if (Input::HotkeyPressed(HK_Lid))
+//             {
+//                 bool lid = !NDS::IsLidClosed();
+//                 NDS::SetLidClosed(lid);
+//                 OSD::AddMessage(0, lid ? "Lid closed" : "Lid opened");
+//             }
+
+//             // microphone input
+//             micProcess();
+            
+//             // auto screen layout
+//             if (Config::ScreenSizing == 3)
+//             {
+//                 mainScreenPos[2] = mainScreenPos[1];
+//                 mainScreenPos[1] = mainScreenPos[0];
+//                 mainScreenPos[0] = NDS::PowerControl9 >> 15;
+
+//                 int guess;
+//                 if (mainScreenPos[0] == mainScreenPos[2] &&
+//                     mainScreenPos[0] != mainScreenPos[1])
+//                 {
+//                     // constant flickering, likely displaying 3D on both screens
+//                     // TODO: when both screens are used for 2D only...???
+//                     guess = 0;
+//                 }
+//                 else
+//                 {
+//                     if (mainScreenPos[0] == 1)
+//                         guess = 1;
+//                     else
+//                         guess = 2;
+//                 }
+
+//                 if (guess != autoScreenSizing)
+//                 {
+//                     autoScreenSizing = guess;
+//                     //emit screenLayoutChange();
+//                 }
+//             }
+            
+// #ifdef OGLRENDERER_ENABLED
+//             if (videoRenderer == 1)
+//             {
+//                 FrontBufferLock.lock();
+//                 if (FrontBufferReverseSyncs[FrontBuffer ^ 1])
+//                     glWaitSync(FrontBufferReverseSyncs[FrontBuffer ^ 1], 0, GL_TIMEOUT_IGNORED);
+//                 FrontBufferLock.unlock();
+//             }
+// #endif
+//             printf("frame\n");
+            
+//             // emulate
+//             u32 nlines = NDS::RunFrame();
+            
+//             FrontBufferLock.lock();
+//             FrontBuffer = GPU::FrontBuffer;
+// #ifdef OGLRENDERER_ENABLED
+//             if (videoRenderer == 1)
+//             {
+//                 if (FrontBufferSyncs[FrontBuffer])
+//                     glDeleteSync(FrontBufferSyncs[FrontBuffer]);
+//                 FrontBufferSyncs[FrontBuffer] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+//                 // this is hacky but this is the easiest way to call
+//                 // this function without dealling with a ton of
+//                 // macro mess
+//                 //epoxy_glFlush();
+//                 glFlush();
+//             }
+// #endif
+//             FrontBufferLock.unlock();
+
+// #ifdef MELONCAP
+//             MelonCap::Update();
+// #endif // MELONCAP
+
+//             if (EmuRunning == 0) return;
+
+//             //windowUpdate();
+//             //panelGL->paintGL();
+
+//             bool fastforward = Input::HotkeyDown(HK_FastForward);
+
+//             if (Config::AudioSync && (!fastforward) && audioDevice)
+//             {
+//                 SDL_LockMutex(audioSyncLock);
+//                 while (SPU::GetOutputSize() > 1024)
+//                 {
+//                     int ret = SDL_CondWaitTimeout(audioSync, audioSyncLock, 500);
+//                     if (ret == SDL_MUTEX_TIMEDOUT) break;
+//                 }
+//                 SDL_UnlockMutex(audioSyncLock);
+//             }
+
+//             double frametimeStep = nlines / (60.0 * 263.0);
+
+//             {
+//                 bool limitfps = Config::LimitFPS && !fastforward;
+
+//                 double practicalFramelimit = limitfps ? frametimeStep : 1.0 / 1000.0;
+
+//                 double curtime = SDL_GetPerformanceCounter() * perfCountsSec;
+
+//                 frameLimitError += practicalFramelimit - (curtime - lastTime);
+//                 if (frameLimitError < -practicalFramelimit)
+//                     frameLimitError = -practicalFramelimit;
+//                 if (frameLimitError > practicalFramelimit)
+//                     frameLimitError = practicalFramelimit;
+
+//                 if (round(frameLimitError * 1000.0) > 0.0)
+//                 {
+//                     SDL_Delay(round(frameLimitError * 1000.0));
+//                     double timeBeforeSleep = curtime;
+//                     curtime = SDL_GetPerformanceCounter() * perfCountsSec;
+//                     frameLimitError -= curtime - timeBeforeSleep;
+//                 }
+
+//                 lastTime = curtime;
+//             }
+
+//             nframes++;
+//             if (nframes >= 30)
+//             {
+//                 double time = SDL_GetPerformanceCounter() * perfCountsSec;
+//                 double dt = time - lastMeasureTime;
+//                 lastMeasureTime = time;
+
+//                 u32 fps = round(nframes / dt);
+//                 nframes = 0;
+
+//                 float fpstarget = 1.0/frametimeStep;
+
+//                 sprintf(melontitle, "[%d/%.0f] melonDS " MELONDS_VERSION, fps, fpstarget);
+//                 //changeWindowTitle(melontitle);
+//                 emscripten_set_window_title(melontitle);
+//             }
+//         }
+//         else
+//         {
+//             printf("paused\n");
+//             // paused
+//             nframes = 0;
+//             lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
+//             lastMeasureTime = lastTime;
+
+//             //windowUpdate();
+//             panelGL->paintGL();
+
+//             EmuStatus = EmuRunning;
+
+//             sprintf(melontitle, "melonDS " MELONDS_VERSION);
+//             //changeWindowTitle(melontitle);
+//             emscripten_set_window_title(melontitle);
+
+//             SDL_Delay(75);
+//         }
+//     }
 }
 
 void EmuThread::emuRun()
@@ -786,7 +1022,14 @@ int main(int argc, char** argv)
     SANITIZE(Config::ScreenAspectBot, 0, 4);
 #undef SANITIZE
 
-    SDL_CreateWindowAndRenderer(Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL, &window, &sdl_renderer);
+    window = SDL_CreateWindow("emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetSwapInterval(0);
+    glcontext = SDL_GL_CreateContext(window);
+    sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+    
+    //SDL_CreateWindowAndRenderer(Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL, &window, &sdl_renderer);
 
     audioSync = SDL_CreateCond();
     audioSyncLock = SDL_CreateMutex();

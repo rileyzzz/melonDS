@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <thread>
 
+//#include <epoxy/gl.h>
 #include <SDL2/SDL.h>
 
 #include "Shader.h"
@@ -33,7 +34,7 @@ public:
     void paintGL();
     //void resizeEvent(QResizeEvent* event) override;
     void resizeGL(int w, int h);
-private:
+
     void setupScreenLayout(int w, int h);
 };
 
@@ -48,14 +49,14 @@ private:
 
 
     //render variables
-    bool hasOGL = true;
-    u32 mainScreenPos[3];
-    u32 nframes;
-    double perfCountsSec;
-    double lastTime;
-    double frameLimitError;
-    double lastMeasureTime;
-    char melontitle[100];
+    // bool hasOGL = true;
+    // u32 mainScreenPos[3];
+    // u32 nframes;
+    // double perfCountsSec;
+    // double lastTime;
+    // double frameLimitError;
+    // double lastMeasureTime;
+    // char melontitle[100];
 
 public:
     int FrontBuffer = 0;

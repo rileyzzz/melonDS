@@ -32,7 +32,7 @@ bool GLRenderer::BuildRenderShader(u32 flags, const char* vs, const char* fs)
 {
     char shadername[32];
     sprintf(shadername, "RenderShader%02X", flags);
-
+    printf("Compiling render shader %s\n", shadername);
     int headerlen = strlen(kShaderHeader);
 
     int vslen = strlen(vs);
