@@ -49,14 +49,14 @@ private:
 
 
     //render variables
-    // bool hasOGL = true;
-    // u32 mainScreenPos[3];
-    // u32 nframes;
-    // double perfCountsSec;
-    // double lastTime;
-    // double frameLimitError;
-    // double lastMeasureTime;
-    // char melontitle[100];
+    bool hasOGL = true;
+    u32 mainScreenPos[3];
+    u32 nframes;
+    double perfCountsSec;
+    double lastTime;
+    double frameLimitError;
+    double lastMeasureTime;
+    char melontitle[100];
 
 public:
     int FrontBuffer = 0;
@@ -72,6 +72,7 @@ public:
 
     void start();
     void run();
+    void frame();
 
     void renderLoop();
 

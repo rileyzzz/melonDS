@@ -44,6 +44,7 @@ u8 PacketBuffer[2048];
 
 void Init(int argc, char** argv)
 {
+    EmuDirectory = new char[255];
     strcpy(EmuDirectory, "/");
 
 }

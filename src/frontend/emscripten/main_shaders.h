@@ -32,7 +32,7 @@ void main()
 
 const char* kScreenFS = R"(#version 300 es
 
-uniform sampler2D ScreenTex;
+uniform mediump sampler2D ScreenTex;
 
 smooth in mediump vec2 fTexcoord;
 
