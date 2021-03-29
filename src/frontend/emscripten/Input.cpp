@@ -76,37 +76,43 @@ void CloseJoystick()
 //     return key;
 // }
 
-// void KeyPress(QKeyEvent* event)
-// {
-//     int keyHK = GetEventKeyVal(event);
-//     int keyKP = keyHK;
-//     if (event->modifiers() != Qt::KeypadModifier)
-//         keyKP &= ~event->modifiers();
+void KeyPress(SDL_KeyboardEvent* event)
+{
+    int keyHK = event->keysym.scancode;
+    int keyKP = keyHK;
 
-//     for (int i = 0; i < 12; i++)
-//         if (keyKP == Config::KeyMapping[i])
-//             KeyInputMask &= ~(1<<i);
+    printf("scancode %d\n", keyHK);
+    //SDL_Keymod modifiers = event->keysym.mod;
 
-//     for (int i = 0; i < HK_MAX; i++)
-//         if (keyHK == Config::HKKeyMapping[i])
-//             KeyHotkeyMask |= (1<<i);
-// }
+    //if (!(modifiers & KMOD_NUM))
+        //keyKP &= ~event->modifiers();
 
-// void KeyRelease(QKeyEvent* event)
-// {
-//     int keyHK = GetEventKeyVal(event);
-//     int keyKP = keyHK;
-//     if (event->modifiers() != Qt::KeypadModifier)
-//         keyKP &= ~event->modifiers();
+    for (int i = 0; i < 12; i++)
+        if (keyKP == Config::KeyMapping[i])
+            KeyInputMask &= ~(1<<i);
 
-//     for (int i = 0; i < 12; i++)
-//         if (keyKP == Config::KeyMapping[i])
-//             KeyInputMask |= (1<<i);
+    for (int i = 0; i < HK_MAX; i++)
+        if (keyHK == Config::HKKeyMapping[i])
+            KeyHotkeyMask |= (1<<i);
+}
 
-//     for (int i = 0; i < HK_MAX; i++)
-//         if (keyHK == Config::HKKeyMapping[i])
-//             KeyHotkeyMask &= ~(1<<i);
-// }
+void KeyRelease(SDL_KeyboardEvent* event)
+{
+    int keyHK = event->keysym.scancode;
+    int keyKP = keyHK;
+    //SDL_Keymod modifiers = event->keysym.mod;
+
+    //if (!(modifiers & KMOD_NUM))
+        //keyKP &= ~event->modifiers();
+
+    for (int i = 0; i < 12; i++)
+        if (keyKP == Config::KeyMapping[i])
+            KeyInputMask |= (1<<i);
+
+    for (int i = 0; i < HK_MAX; i++)
+        if (keyHK == Config::HKKeyMapping[i])
+            KeyHotkeyMask &= ~(1<<i);
+}
 
 
 bool JoystickButtonDown(int val)

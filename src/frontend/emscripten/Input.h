@@ -18,8 +18,8 @@ void Init();
 void OpenJoystick();
 void CloseJoystick();
 
-//void KeyPress(QKeyEvent* event);
-//void KeyRelease(QKeyEvent* event);
+void KeyPress(SDL_KeyboardEvent* event);
+void KeyRelease(SDL_KeyboardEvent* event);
 
 void Process();
 

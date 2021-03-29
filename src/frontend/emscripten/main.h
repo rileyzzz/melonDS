@@ -14,13 +14,17 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+void keyPressEvent(SDL_KeyboardEvent* event);
+void keyReleaseEvent(SDL_KeyboardEvent* event);
+void onMousePress(SDL_MouseButtonEvent* event);
+void onMouseRelease(SDL_MouseButtonEvent* event);
+void onMouseMove(SDL_MouseMotionEvent* event);
+
 class ScreenPanelGL
 {
     float screenMatrix[Frontend::MaxScreenTransforms][6];
     int screenKind[Frontend::MaxScreenTransforms];
     int numScreens;
-
-    bool touching;
 
     Shader* screenShader;
     GLuint screenVertexBuffer;
@@ -28,6 +32,8 @@ class ScreenPanelGL
     GLuint screenTexture;
 
 public:
+bool touching;
+
     ScreenPanelGL();
     ~ScreenPanelGL();
 

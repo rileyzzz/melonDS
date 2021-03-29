@@ -244,6 +244,32 @@ void EmuThread::deinitOpenGL()
 
 void main_loop()
 {
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        switch(event.type)
+        {
+            case SDL_KEYDOWN:
+                keyPressEvent(&event.key);
+                break;
+
+            case SDL_KEYUP:
+                keyReleaseEvent(&event.key);
+                break;
+
+            case SDL_MOUSEBUTTONDOWN:
+                onMousePress(&event.button);
+                break;
+
+            case SDL_MOUSEBUTTONUP:
+                onMouseRelease(&event.button);
+                break;
+
+            case SDL_MOUSEMOTION:
+                onMouseMove(&event.motion);
+                break;
+        }
+    }
     panelGL->paintGL();
     //emuThread->frame();
 
@@ -458,7 +484,7 @@ void EmuThread::frame()
 
         // emulate
         static unsigned long frame = 0;
-        printf("frame %d\n", frame++);
+        //printf("frame %d\n", frame++);
 
         u32 nlines = NDS::RunFrame();
 
@@ -828,6 +854,75 @@ void ScreenPanelGL::paintGL()
     //OSD::DrawGL(w * factor, h * factor);
 
     SDL_GL_SwapWindow(mainWindow);
+}
+
+void keyPressEvent(SDL_KeyboardEvent* event)
+{
+    //if (event->isAutoRepeat()) return;
+
+    // TODO!! REMOVE ME IN RELEASE BUILDS!!
+    //if (event->key() == Qt::Key_F11) NDS::debug(0);
+
+    Input::KeyPress(event);
+}
+
+void keyReleaseEvent(SDL_KeyboardEvent* event)
+{
+    //if (event->isAutoRepeat()) return;
+
+    Input::KeyRelease(event);
+}
+
+void onMousePress(SDL_MouseButtonEvent* event)
+{
+    //event->accept();
+    //if (event->button() != Qt::LeftButton) return;
+    if(event->button != SDL_BUTTON_LEFT) return;
+
+    int x = event->x;
+    int y = event->y;
+
+    if (Frontend::GetTouchCoords(x, y))
+    {
+        panelGL->touching = true;
+        NDS::TouchScreen(x, y);
+    }
+}
+
+void onMouseRelease(SDL_MouseButtonEvent* event)
+{
+    //event->accept();
+    //if (event->button() != Qt::LeftButton) return;
+    if(event->button != SDL_BUTTON_LEFT) return;
+
+    if (panelGL->touching)
+    {
+        panelGL->touching = false;
+        NDS::ReleaseScreen();
+    }
+}
+
+void onMouseMove(SDL_MouseMotionEvent* event)
+{
+    //event->accept();
+    
+    //showCursor();
+
+    if (!(event->state & SDL_BUTTON_LMASK)) return;
+    if (!panelGL->touching) return;
+
+    int x = event->x;
+    int y = event->y;
+
+    Frontend::GetTouchCoords(x, y);
+
+    // clamp to screen range
+    if (x < 0) x = 0;
+    else if (x > 255) x = 255;
+    if (y < 0) y = 0;
+    else if (y > 191) y = 191;
+
+    NDS::TouchScreen(x, y);
 }
 
 int main(int argc, char** argv)
