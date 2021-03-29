@@ -268,6 +268,22 @@ void main_loop()
             case SDL_MOUSEMOTION:
                 onMouseMove(&event.motion);
                 break;
+
+            case SDL_WINDOWEVENT:
+            {
+                switch (event.window.event)
+                {
+                    case SDL_WINDOWEVENT_RESIZED:
+                    case SDL_WINDOWEVENT_SIZE_CHANGED:
+                        printf("WINDOW RESIZE\n");
+                        // SDL_Log("Window %d resized to %dx%d",
+                        //         event->window.windowID, event->window.data1,
+                        //         event->window.data2);
+                        panelGL->setupScreenLayout();
+                        break;
+                }
+                break;
+            }
         }
     }
     panelGL->paintGL();
@@ -682,8 +698,10 @@ void ScreenPanelGL::screenSetupLayout(int w, int h)
 
 void ScreenPanelGL::setupScreenLayout()
 {
-    int w = Config::WindowWidth;
-    int h = Config::WindowHeight;
+    int w, h;
+    SDL_GetWindowSize(mainWindow, &w, &h);
+    //int w = Config::WindowWidth;
+    //int h = Config::WindowHeight;
 
     screenSetupLayout(w, h);
 }
@@ -777,8 +795,10 @@ void ScreenPanelGL::paintGL()
     //printf("painting\n");
     SDL_GL_MakeCurrent(mainWindow, glcontext);
 
-    int w = Config::WindowWidth;
-    int h = Config::WindowHeight;
+    // int w = Config::WindowWidth;
+    // int h = Config::WindowHeight;
+    int w, h;
+    SDL_GetWindowSize(mainWindow, &w, &h);
     //float factor = devicePixelRatioF();
     float factor = 1.0f;
 
