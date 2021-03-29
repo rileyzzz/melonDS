@@ -413,7 +413,7 @@ void EmuThread::run()
             {
                 FrontBufferLock.lock();
                 if (FrontBufferReverseSyncs[FrontBuffer ^ 1])
-                    ::glWaitSync(FrontBufferReverseSyncs[FrontBuffer ^ 1], 0, GL_TIMEOUT_IGNORED);
+                    glWaitSync(FrontBufferReverseSyncs[FrontBuffer ^ 1], 0, GL_TIMEOUT_IGNORED);
                 FrontBufferLock.unlock();
             }
 #endif
@@ -431,7 +431,7 @@ void EmuThread::run()
             {
                 if (FrontBufferSyncs[FrontBuffer])
                     glDeleteSync(FrontBufferSyncs[FrontBuffer]);
-                FrontBufferSyncs[FrontBuffer] = ::glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+                FrontBufferSyncs[FrontBuffer] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
                 // this is hacky but this is the easiest way to call
                 // this function without dealling with a ton of
                 // macro mess
@@ -662,7 +662,7 @@ void ScreenPanelGL::initializeGL()
     GLuint pid = screenShader->ID;
     glBindAttribLocation(pid, 0, "vPosition");
     glBindAttribLocation(pid, 1, "vTexcoord");
-    ::glBindFragDataLocation(pid, 0, "oColor");
+    glBindFragDataLocation(pid, 0, "oColor");
 
     //screenShader->link();
 
@@ -697,8 +697,8 @@ void ScreenPanelGL::initializeGL()
     glBindBuffer(GL_ARRAY_BUFFER, screenVertexBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    ::glGenVertexArrays(1, &screenVertexArray);
-    ::glBindVertexArray(screenVertexArray);
+    glGenVertexArrays(1, &screenVertexArray);
+    glBindVertexArray(screenVertexArray);
     glEnableVertexAttribArray(0); // position
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * 4, (void*)(0));
     glEnableVertexAttribArray(1); // texcoord
@@ -753,7 +753,7 @@ void ScreenPanelGL::paintGL()
         if (GPU::Renderer != 0)
         {
             if (emuThread->FrontBufferSyncs[emuThread->FrontBuffer])
-                ::glWaitSync(emuThread->FrontBufferSyncs[emuThread->FrontBuffer], 0, GL_TIMEOUT_IGNORED);
+                glWaitSync(emuThread->FrontBufferSyncs[emuThread->FrontBuffer], 0, GL_TIMEOUT_IGNORED);
             // hardware-accelerated render
             GPU::CurGLCompositor->BindOutputTexture(frontbuf);
         }
@@ -777,21 +777,21 @@ void ScreenPanelGL::paintGL()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 
         glBindBuffer(GL_ARRAY_BUFFER, screenVertexBuffer);
-        ::glBindVertexArray(screenVertexArray);
+        glBindVertexArray(screenVertexArray);
 
         GLint transloc = screenShader->uniformLocation("uTransform");
 
         for (int i = 0; i < numScreens; i++)
         {
-            ::glUniformMatrix2x3fv(transloc, 1, GL_TRUE, screenMatrix[i]);
+            glUniformMatrix2x3fv(transloc, 1, GL_TRUE, screenMatrix[i]);
             glDrawArrays(GL_TRIANGLES, screenKind[i] == 0 ? 0 : 2 * 3, 2 * 3);
         }
 
         screenShader->release();
 
         if (emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer])
-            ::glDeleteSync(emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer]);
-        emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer] = ::glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+            glDeleteSync(emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer]);
+        emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
         emuThread->FrontBufferLock.unlock();
     }
 

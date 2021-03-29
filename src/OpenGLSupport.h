@@ -71,7 +71,12 @@
 //#define glMapBuffer(target, access) glMapBufferRange(target, 0, 0, access)
 
 #else
+#define glFramebufferTexture(target, att, tex, level) glFramebufferTexture2D(target, att, GL_TEXTURE_2D, tex, level)
+//#define glColorMaski(i, r, g, b, a)
+#define glBindFragDataLocation(a, b, c)
+#define glDrawBuffer(a) const GLenum buffers[]{ a }; glDrawBuffers(1, buffers )
 
+#define glColorMaski(i, r, g, b, a) glColorMask(r, g, b, a)
 #endif
 
 //#define glMapBuffer(a, b) glMapBufferRange(a, b)
