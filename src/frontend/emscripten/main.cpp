@@ -9,6 +9,7 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+#include <emscripten/html5.h>
 #endif
 
 #ifndef _WIN32
@@ -706,6 +707,30 @@ void ScreenPanelGL::setupScreenLayout()
     screenSetupLayout(w, h);
 }
 
+EM_BOOL fullscreenchange_callback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
+{
+//   printf("%s, isFullscreen: %d, fullscreenEnabled: %d, fs element nodeName: \"%s\", fs element id: \"%s\". New size: %dx%d pixels. Screen size: %dx%d pixels.\n",
+//     emscripten_event_type_to_string(eventType), e->isFullscreen, e->fullscreenEnabled, e->nodeName, e->id, e->elementWidth, e->elementHeight, e->screenWidth, e->screenHeight);
+//   ++callCount;
+//   if (callCount == 1) { // Transitioned to fullscreen.
+//     if (!e->isFullscreen) {
+//       report_result(1);
+//     }
+//   } else if (callCount == 2) { // Transitioned to windowed, we must be back to the default pixel size 300x150.
+//     if (e->isFullscreen || e->elementWidth != 300 || e->elementHeight != 150) {
+//       report_result(1);
+//     } else {
+//       report_result(0);
+//     }
+//   }
+    //EM_ASM(alert("fullscreen"););
+    //printf("fullscreen\n");
+    //emscripten_request_fullscreen("canvas", 1);
+    SDL_SetWindowSize(mainWindow, 640, 480);
+    panelGL->setupScreenLayout();
+    return 0;
+}
+
 void ScreenPanelGL::initializeGL()
 {
     //initializeOpenGLFunctions();
@@ -802,7 +827,7 @@ void ScreenPanelGL::paintGL()
     //float factor = devicePixelRatioF();
     float factor = 1.0f;
 
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    //glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glViewport(0, 0, w * factor, h * factor);
@@ -1053,7 +1078,7 @@ int main(int argc, char** argv)
     Input::OpenJoystick();
 
     //mainWindow = new MainWindow();
-    mainWindow = SDL_CreateWindow("emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+    mainWindow = SDL_CreateWindow("emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetSwapInterval(0);
@@ -1066,6 +1091,10 @@ int main(int argc, char** argv)
     sdl_renderer = SDL_CreateRenderer(mainWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 
     panelGL = new ScreenPanelGL();
+
+    //SDL_SetWindowSize(mainWindow, 640, 480);
+    emscripten_set_fullscreenchange_callback("canvas", 0, 1, fullscreenchange_callback);
+    //emscripten_request_fullscreen("canvas", 1);
 
     emuThread = new EmuThread();
     emuThread->start();
