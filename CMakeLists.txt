@@ -116,6 +116,7 @@ endif()
 
 option(BUILD_QT_SDL "Build Qt/SDL frontend" OFF)
 option(BUILD_EM_SDL "Build Emscripten frontend" ON)
+option(BUILD_TEST_SDL "Build Test frontend" OFF)
 
 add_subdirectory(src)
 
@@ -125,4 +126,8 @@ endif()
 
 if (BUILD_EM_SDL)
 	add_subdirectory(src/frontend/emscripten)
+endif()
+
+if (BUILD_TEST_SDL)
+	add_subdirectory(src/frontend/tests)
 endif()

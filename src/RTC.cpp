@@ -25,6 +25,18 @@
 #include "RTC.h"
 
 
+#ifdef _MSC_VER
+struct tm* localtime_r(time_t* _clock, struct tm* _result)
+{
+    struct tm* p = localtime(_clock);
+
+    if (p)
+        *(_result) = *p;
+
+    return p;
+}
+#endif
+
 namespace RTC
 {
 

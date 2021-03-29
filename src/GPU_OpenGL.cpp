@@ -154,9 +154,10 @@ void GLCompositor::SetRenderSettings(RenderSettings& settings)
         glBindTexture(GL_TEXTURE_2D, CompScreenOutputTex[i]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ScreenW, ScreenH, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         // fill the padding
-        u8 zeroPixels[ScreenW*2*scale*4];
+        u8* zeroPixels = new u8[ScreenW*2*scale*4];
         memset(zeroPixels, 0, sizeof(zeroPixels));
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 192*scale, ScreenW, 2*scale, GL_RGBA, GL_UNSIGNED_BYTE, zeroPixels);
+        delete[] zeroPixels;
 
         GLenum fbassign[] = {GL_COLOR_ATTACHMENT0};
         glBindFramebuffer(GL_FRAMEBUFFER, CompScreenOutputFB[i]);

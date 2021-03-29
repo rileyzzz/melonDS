@@ -1,23 +1,9 @@
-/*
-    Copyright 2016-2021 Arisotura
 
-    This file is part of melonDS.
-
-    melonDS is free software: you can redistribute it and/or modify it under
-    the terms of the GNU General Public License as published by the Free
-    Software Foundation, either version 3 of the License, or (at your option)
-    any later version.
-
-    melonDS is distributed in the hope that it will be useful, but WITHOUT ANY
-    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-    FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License along
-    with melonDS. If not, see http://www.gnu.org/licenses/.
-*/
-
-#include <QKeyEvent>
+#ifdef __EMSCRIPTEN__
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 
 #include "Input.h"
 #include "PlatformConfig.h"
@@ -77,55 +63,55 @@ void CloseJoystick()
 }
 
 
-int GetEventKeyVal(QKeyEvent* event)
-{
-    int key = event->key();
-    int mod = event->modifiers();
-    bool ismod = (key == Qt::Key_Control ||
-                  key == Qt::Key_Alt ||
-                  key == Qt::Key_AltGr ||
-                  key == Qt::Key_Shift ||
-                  key == Qt::Key_Meta);
+// int GetEventKeyVal(QKeyEvent* event)
+// {
+//     int key = event->key();
+//     int mod = event->modifiers();
+//     bool ismod = (key == Qt::Key_Control ||
+//                   key == Qt::Key_Alt ||
+//                   key == Qt::Key_AltGr ||
+//                   key == Qt::Key_Shift ||
+//                   key == Qt::Key_Meta);
 
-    if (!ismod)
-        key |= mod;
-    else if (Input::IsRightModKey(event))
-        key |= (1<<31);
+//     if (!ismod)
+//         key |= mod;
+//     else if (Input::IsRightModKey(event))
+//         key |= (1<<31);
 
-    return key;
-}
+//     return key;
+// }
 
-void KeyPress(QKeyEvent* event)
-{
-    int keyHK = GetEventKeyVal(event);
-    int keyKP = keyHK;
-    if (event->modifiers() != Qt::KeypadModifier)
-        keyKP &= ~event->modifiers();
+// void KeyPress(QKeyEvent* event)
+// {
+//     int keyHK = GetEventKeyVal(event);
+//     int keyKP = keyHK;
+//     if (event->modifiers() != Qt::KeypadModifier)
+//         keyKP &= ~event->modifiers();
 
-    for (int i = 0; i < 12; i++)
-        if (keyKP == Config::KeyMapping[i])
-            KeyInputMask &= ~(1<<i);
+//     for (int i = 0; i < 12; i++)
+//         if (keyKP == Config::KeyMapping[i])
+//             KeyInputMask &= ~(1<<i);
 
-    for (int i = 0; i < HK_MAX; i++)
-        if (keyHK == Config::HKKeyMapping[i])
-            KeyHotkeyMask |= (1<<i);
-}
+//     for (int i = 0; i < HK_MAX; i++)
+//         if (keyHK == Config::HKKeyMapping[i])
+//             KeyHotkeyMask |= (1<<i);
+// }
 
-void KeyRelease(QKeyEvent* event)
-{
-    int keyHK = GetEventKeyVal(event);
-    int keyKP = keyHK;
-    if (event->modifiers() != Qt::KeypadModifier)
-        keyKP &= ~event->modifiers();
+// void KeyRelease(QKeyEvent* event)
+// {
+//     int keyHK = GetEventKeyVal(event);
+//     int keyKP = keyHK;
+//     if (event->modifiers() != Qt::KeypadModifier)
+//         keyKP &= ~event->modifiers();
 
-    for (int i = 0; i < 12; i++)
-        if (keyKP == Config::KeyMapping[i])
-            KeyInputMask |= (1<<i);
+//     for (int i = 0; i < 12; i++)
+//         if (keyKP == Config::KeyMapping[i])
+//             KeyInputMask |= (1<<i);
 
-    for (int i = 0; i < HK_MAX; i++)
-        if (keyHK == Config::HKKeyMapping[i])
-            KeyHotkeyMask &= ~(1<<i);
-}
+//     for (int i = 0; i < HK_MAX; i++)
+//         if (keyHK == Config::HKKeyMapping[i])
+//             KeyHotkeyMask &= ~(1<<i);
+// }
 
 
 bool JoystickButtonDown(int val)
@@ -231,18 +217,18 @@ bool HotkeyReleased(int id) { return HotkeyRelease & (1<<id); }
 // Qt provides no real cross-platform way to do this, so here we go
 // for Windows and Linux we can distinguish via scancodes (but both
 // provide different scancodes)
-#ifdef __WIN32__
-bool IsRightModKey(QKeyEvent* event)
-{
-    quint32 scan = event->nativeScanCode();
-    return (scan == 0x11D || scan == 0x138 || scan == 0x36);
-}
-#else
-bool IsRightModKey(QKeyEvent* event)
-{
-    quint32 scan = event->nativeScanCode();
-    return (scan == 0x69 || scan == 0x6C || scan == 0x3E);
-}
-#endif
+// #ifdef __WIN32__
+// bool IsRightModKey(QKeyEvent* event)
+// {
+//     quint32 scan = event->nativeScanCode();
+//     return (scan == 0x11D || scan == 0x138 || scan == 0x36);
+// }
+// #else
+// bool IsRightModKey(QKeyEvent* event)
+// {
+//     quint32 scan = event->nativeScanCode();
+//     return (scan == 0x69 || scan == 0x6C || scan == 0x3E);
+// }
+// #endif
 
 }

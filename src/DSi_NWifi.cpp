@@ -1003,7 +1003,7 @@ void DSi_NWifi::WMI_Command()
         case 0x000E: // get channel list
             {
                 int nchan = 11; // TODO: customize??
-                u8 reply[2 + (nchan*2) + 2];
+                u8* reply = new u8[2 + (nchan*2) + 2];
 
                 reply[0] = 0;
                 reply[1] = nchan;
@@ -1012,6 +1012,7 @@ void DSi_NWifi::WMI_Command()
                 *(u16*)&reply[2 + (nchan*2)] = 0;
 
                 SendWMIEvent(1, 0x000E, reply, 4+(nchan*2));
+                delete[] reply;
             }
             break;
 

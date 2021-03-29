@@ -20,93 +20,112 @@
 
 namespace Archive
 {
-
-QVector<QString> ListArchive(const char* path)
-{
-    struct archive *a;
-    struct archive_entry *entry;
-    int r;
-
-    QVector<QString> fileList = {"OK"};
-    
-    a = archive_read_new();
-    archive_read_support_filter_all(a);
-    archive_read_support_format_all(a);
-    r = archive_read_open_filename(a, path, 10240);
-    if (r != ARCHIVE_OK)
+    QVector<QString> ListArchive(const char* path)
     {
-        return QVector<QString> {"Err"};
+        return QVector<QString>();
     }
-    
-    while (archive_read_next_header(a, &entry) == ARCHIVE_OK) 
+    QVector<QString> ExtractFileFromArchive(const char* path, const char* wantedFile, QByteArray* romBuffer)
     {
-      fileList.push_back(archive_entry_pathname(entry));
-      archive_read_data_skip(a);
+        return QVector<QString>();
     }
-    archive_read_close(a);
-    archive_read_free(a);  
-    if (r != ARCHIVE_OK)
-    {
-        return QVector<QString> {"Err"};
-    }
-    
-    return fileList;
-}
-
-QVector<QString> ExtractFileFromArchive(const char* path, const char* wantedFile, QByteArray *romBuffer)
-{
-    struct archive *a = archive_read_new();
-    struct archive_entry *entry;
-    int r;
-
-    archive_read_support_format_all(a);
-    archive_read_support_filter_all(a);
-    
-    r = archive_read_open_filename(a, path, 10240);
-    if (r != ARCHIVE_OK)
-    {
-        return QVector<QString> {"Err"};
-    }
-
-    while (archive_read_next_header(a, &entry) == ARCHIVE_OK)
-    {
-        if (strcmp(wantedFile, archive_entry_pathname(entry)) == 0)
-        {
-            break;
-        }
-    }
-
-    size_t bytesToWrite = archive_entry_size(entry);
-    romBuffer->fill(0, bytesToWrite);
-    ssize_t bytesRead = archive_read_data(a, romBuffer->data(), bytesToWrite);
-
-    if (bytesRead < 0)
-    {
-        printf("Error whilst reading archive: %s", archive_error_string(a));
-        return QVector<QString> {"Err", archive_error_string(a)};
-    }
-
-    archive_read_close(a);
-    archive_read_free(a);
-    return QVector<QString> {wantedFile};
-
-}
-
-u32 ExtractFileFromArchive(const char* path, const char* wantedFile, u8 **romdata)
-{
-    QByteArray romBuffer;
-    QVector<QString> extractResult = ExtractFileFromArchive(path, wantedFile, &romBuffer);
-
-    if(extractResult[0] == "Err")
+    //{
+    //    return QVector<QString>();
+    //}
+    u32 ExtractFileFromArchive(const char* path, const char* wantedFile, u8** romdata)
     {
         return 0;
     }
-
-    u32 len = romBuffer.size();
-    *romdata = new u8[romBuffer.size()];
-    memcpy(*romdata, romBuffer.data(), len);
-
-    return len;
 }
-
-}
+//
+//namespace Archive
+//{
+//
+//QVector<QString> ListArchive(const char* path)
+//{
+//    struct archive *a;
+//    struct archive_entry *entry;
+//    int r;
+//
+//    QVector<QString> fileList = {"OK"};
+//    
+//    a = archive_read_new();
+//    archive_read_support_filter_all(a);
+//    archive_read_support_format_all(a);
+//    r = archive_read_open_filename(a, path, 10240);
+//    if (r != ARCHIVE_OK)
+//    {
+//        return QVector<QString> {"Err"};
+//    }
+//    
+//    while (archive_read_next_header(a, &entry) == ARCHIVE_OK) 
+//    {
+//      fileList.push_back(archive_entry_pathname(entry));
+//      archive_read_data_skip(a);
+//    }
+//    archive_read_close(a);
+//    archive_read_free(a);  
+//    if (r != ARCHIVE_OK)
+//    {
+//        return QVector<QString> {"Err"};
+//    }
+//    
+//    return fileList;
+//}
+//
+//QVector<QString> ExtractFileFromArchive(const char* path, const char* wantedFile, QByteArray *romBuffer)
+//{
+//    struct archive *a = archive_read_new();
+//    struct archive_entry *entry;
+//    int r;
+//
+//    archive_read_support_format_all(a);
+//    archive_read_support_filter_all(a);
+//    
+//    r = archive_read_open_filename(a, path, 10240);
+//    if (r != ARCHIVE_OK)
+//    {
+//        return QVector<QString> {"Err"};
+//    }
+//
+//    while (archive_read_next_header(a, &entry) == ARCHIVE_OK)
+//    {
+//        if (strcmp(wantedFile, archive_entry_pathname(entry)) == 0)
+//        {
+//            break;
+//        }
+//    }
+//
+//    size_t bytesToWrite = archive_entry_size(entry);
+//    romBuffer->fill(0, bytesToWrite);
+//    size_t bytesRead = archive_read_data(a, romBuffer->data(), bytesToWrite);
+//
+//    if (bytesRead < 0)
+//    {
+//        printf("Error whilst reading archive: %s", archive_error_string(a));
+//        return QVector<QString> {"Err", archive_error_string(a)};
+//    }
+//
+//    archive_read_close(a);
+//    archive_read_free(a);
+//    return QVector<QString> {wantedFile};
+//
+//}
+//
+//u32 ExtractFileFromArchive(const char* path, const char* wantedFile, u8 **romdata)
+//{
+//    QByteArray romBuffer;
+//    QVector<QString> extractResult = ExtractFileFromArchive(path, wantedFile, &romBuffer);
+//
+//    if(extractResult[0] == "Err")
+//    {
+//        return 0;
+//    }
+//
+//    u32 len = romBuffer.size();
+//    *romdata = new u8[romBuffer.size()];
+//    memcpy(*romdata, romBuffer.data(), len);
+//
+//    return len;
+//}
+//
+//}

@@ -106,23 +106,26 @@ if (APPLE)
 endif()
 
 if (ENABLE_OGLRENDERER)
-    find_package(PkgConfig REQUIRED)
+    #find_package(PkgConfig REQUIRED)
+    #find_package(SDL2 REQUIRED)
+    find_package(GLEW REQUIRED)
     #pkg_check_modules(EPOXY REQUIRED epoxy)
     
-    set(EPOXY_INCLUDE_DIRS  /workspace/melonDS/cmake/Modules/empoxy/include
-                            /workspace/melonDS/cmake/Modules/empoxy/build/include
-                            /workspace/melonDS/cmake/Modules/empoxy/src
-                            /workspace/melonDS/cmake/Modules/empoxy/build/src)
-    target_link_directories(core PUBLIC /workspace/melonDS/cmake/Modules/empoxy/build/src)
-    set(EPOXY_LIBRARIES     epoxy)
+    #set(EPOXY_INCLUDE_DIRS  /workspace/melonDS/cmake/Modules/empoxy/include
+                            #/workspace/melonDS/cmake/Modules/empoxy/build/include
+                            #/workspace/melonDS/cmake/Modules/empoxy/src
+                            #/workspace/melonDS/cmake/Modules/empoxy/build/src)
+    #target_link_directories(core PUBLIC /workspace/melonDS/cmake/Modules/empoxy/build/src)
+    #set(EPOXY_LIBRARIES     epoxy)
+    target_link_directories(core PUBLIC G:/libraries/SDL2-2.0.14/lib/x64 G:/libraries/glew-2.1.0/lib/Release/x64)
 
-    target_include_directories(core PRIVATE ${EPOXY_INCLUDE_DIRS})
+    target_include_directories(core PRIVATE G:/libraries/SDL2-2.0.14/include ${GLEW_INCLUDE_DIRS})
     if (WIN32)
-        target_link_libraries(core ole32 comctl32 ws2_32 ${EPOXY_LIBRARIES})
+        target_link_libraries(core ole32 comctl32 ws2_32 opengl32 SDL2 SDL2main glew32s)
     elseif (APPLE)
-        target_link_libraries(core ${EPOXY_LIBRARIES})
+        target_link_libraries(core SDL2 SDL2main glew32s)
     else()
-        target_link_libraries(core rt ${EPOXY_LIBRARIES})
+        target_link_libraries(core rt SDL2 SDL2main glew32s)
     endif()
 else()
 	if (WIN32)

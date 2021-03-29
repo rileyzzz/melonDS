@@ -1,3 +1,4 @@
+#include "..\tests\main.h"
 /*
     Copyright 2016-2021 Arisotura
 
@@ -42,7 +43,7 @@
 #include <signal.h>
 #endif
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #ifdef OGLRENDERER_ENABLED
 #include "OpenGLSupport.h"
@@ -78,6 +79,11 @@
 #include "main_shaders.h"
 
 #include "ArchiveUtil.h"
+
+#ifdef _MSC_VER 
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
 
 // TODO: uniform variable spelling
 
@@ -319,6 +325,8 @@ void EmuThread::initOpenGL()
         return;
     }
 
+    
+
     oglContext->moveToThread(this);
 }
 
@@ -482,7 +490,7 @@ void EmuThread::run()
             {
                 FrontBufferLock.lock();
                 if (FrontBufferReverseSyncs[FrontBuffer ^ 1])
-                    glWaitSync(FrontBufferReverseSyncs[FrontBuffer ^ 1], 0, GL_TIMEOUT_IGNORED);
+                    ::glWaitSync(FrontBufferReverseSyncs[FrontBuffer ^ 1], 0, GL_TIMEOUT_IGNORED);
                 FrontBufferLock.unlock();
             }
 #endif
@@ -497,11 +505,12 @@ void EmuThread::run()
             {
                 if (FrontBufferSyncs[FrontBuffer])
                     glDeleteSync(FrontBufferSyncs[FrontBuffer]);
-                FrontBufferSyncs[FrontBuffer] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+                FrontBufferSyncs[FrontBuffer] = ::glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
                 // this is hacky but this is the easiest way to call
                 // this function without dealling with a ton of
                 // macro mess
-                epoxy_glFlush();
+                //epoxy_glFlush();
+                glFlush();
             }
 #endif
             FrontBufferLock.unlock();
@@ -899,7 +908,7 @@ ScreenPanelGL::~ScreenPanelGL()
 
     glDeleteTextures(1, &screenTexture);
 
-    glDeleteVertexArrays(1, &screenVertexArray);
+    ::glDeleteVertexArrays(1, &screenVertexArray);
     glDeleteBuffers(1, &screenVertexBuffer);
 
     delete screenShader;
@@ -919,6 +928,11 @@ void ScreenPanelGL::initializeGL()
 {
     initializeOpenGLFunctions();
 
+    if (glewInit() != GLEW_OK)
+    {
+        assert(false);
+    }
+
     const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
     const GLubyte* version = glGetString(GL_VERSION); // version as a string
     printf("OpenGL: renderer: %s\n", renderer);
@@ -933,7 +947,7 @@ void ScreenPanelGL::initializeGL()
     GLuint pid = screenShader->programId();
     glBindAttribLocation(pid, 0, "vPosition");
     glBindAttribLocation(pid, 1, "vTexcoord");
-    glBindFragDataLocation(pid, 0, "oColor");
+    ::glBindFragDataLocation(pid, 0, "oColor");
 
     screenShader->link();
 
@@ -967,8 +981,8 @@ void ScreenPanelGL::initializeGL()
     glBindBuffer(GL_ARRAY_BUFFER, screenVertexBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glGenVertexArrays(1, &screenVertexArray);
-    glBindVertexArray(screenVertexArray);
+    ::glGenVertexArrays(1, &screenVertexArray);
+    ::glBindVertexArray(screenVertexArray);
     glEnableVertexAttribArray(0); // position
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*4, (void*)(0));
     glEnableVertexAttribArray(1); // texcoord
@@ -1015,7 +1029,7 @@ void ScreenPanelGL::paintGL()
         if (GPU::Renderer != 0)
         {
             if (emuThread->FrontBufferSyncs[emuThread->FrontBuffer])
-                glWaitSync(emuThread->FrontBufferSyncs[emuThread->FrontBuffer], 0, GL_TIMEOUT_IGNORED);
+                ::glWaitSync(emuThread->FrontBufferSyncs[emuThread->FrontBuffer], 0, GL_TIMEOUT_IGNORED);
             // hardware-accelerated render
             GPU::CurGLCompositor->BindOutputTexture(frontbuf);
         }
@@ -1039,21 +1053,21 @@ void ScreenPanelGL::paintGL()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 
         glBindBuffer(GL_ARRAY_BUFFER, screenVertexBuffer);
-        glBindVertexArray(screenVertexArray);
+        ::glBindVertexArray(screenVertexArray);
 
         GLint transloc = screenShader->uniformLocation("uTransform");
 
         for (int i = 0; i < numScreens; i++)
         {
-            glUniformMatrix2x3fv(transloc, 1, GL_TRUE, screenMatrix[i]);
+            ::glUniformMatrix2x3fv(transloc, 1, GL_TRUE, screenMatrix[i]);
             glDrawArrays(GL_TRIANGLES, screenKind[i] == 0 ? 0 : 2*3, 2*3);
         }
 
         screenShader->release();
 
         if (emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer])
-            glDeleteSync(emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer]);
-        emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+            ::glDeleteSync(emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer]);
+        emuThread->FrontBufferReverseSyncs[emuThread->FrontBuffer] = ::glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
         emuThread->FrontBufferLock.unlock();
     }
 
@@ -2485,7 +2499,7 @@ int main(int argc, char** argv)
     Platform::Init(argc, argv);
 
     QApplication melon(argc, argv);
-    melon.setWindowIcon(QIcon(":/melon-icon"));
+    //melon.setWindowIcon(QIcon(":/melon-icon"));
 
     // http://stackoverflow.com/questions/14543333/joystick-wont-work-using-sdl
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
@@ -2506,13 +2520,7 @@ int main(int argc, char** argv)
 
 #define SANITIZE(var, min, max)  { var = std::clamp(var, min, max); }
     SANITIZE(Config::ConsoleType, 0, 1);
-    SANITIZE(Config::_3DRenderer,
-    0,
-    0 // Minimum, Software renderer
-    #ifdef OGLRENDERER_ENABLED
-    + 1 // OpenGL Renderer
-    #endif
-    );
+    SANITIZE(Config::_3DRenderer, 0, 1);
     SANITIZE(Config::ScreenVSyncInterval, 1, 20);
     SANITIZE(Config::GL_ScaleFactor, 1, 16);
     SANITIZE(Config::AudioVolume, 0, 256);

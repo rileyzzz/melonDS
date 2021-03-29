@@ -24,6 +24,7 @@
 #include "FIFO.h"
 #include "Config.h"
 
+#define __builtin_unreachable() __assume(0)
 
 // 3D engine notes
 //

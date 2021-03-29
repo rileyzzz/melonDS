@@ -27,11 +27,11 @@ namespace LAN_Socket
 //
 
 
-bool Init();
-void DeInit();
+    bool Init();// { return false; }
+    void DeInit();// {}
 
-int SendPacket(u8* data, int len);
-int RecvPacket(u8* data);
+    int SendPacket(u8* data, int len);// { return 0; }
+    int RecvPacket(u8* data);// { return 0; }
 
 }
 

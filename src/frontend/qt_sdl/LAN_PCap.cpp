@@ -21,25 +21,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <pcap/pcap.h>
 #include "../Wifi.h"
 #include "LAN_PCap.h"
 #include "PlatformConfig.h"
 
-#ifdef __WIN32__
-	#include <iphlpapi.h>
-#else
-	#include <sys/types.h>
-	#include <ifaddrs.h>
-	#include <netinet/in.h>
-        #ifdef __linux__
-            #include <linux/if_packet.h>
-        #else
-            #include <net/if.h>
-            #include <net/if_dl.h>
-        #endif
-#endif
+#include <iphlpapi.h>
+
 
 
 // welp

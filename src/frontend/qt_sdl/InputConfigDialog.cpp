@@ -20,7 +20,7 @@
 #include <QLabel>
 #include <QKeyEvent>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "types.h"
 #include "Config.h"

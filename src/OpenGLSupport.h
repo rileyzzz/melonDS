@@ -22,16 +22,25 @@
 #include <stdio.h>
 #include <string.h>
 
+#define GLEW_STATIC
 #include <GL/glew.h>
+#ifndef Q_OBJECT
+
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
+
+//#include <epoxy/gl.h>
+#ifdef __EMSCRIPTEN__
 
 #define GL_GLEXT_PROTOTYPES
 #include "SDL_opengl_glext.h"
 
-//#include <epoxy/gl.h>
 #include <SDL2/SDL.h>
+#else
+#include <SDL.h>
 
+#endif
 // #define _EM_GLES3_
 
 // #include <GLES3/gl32.h>
@@ -60,6 +69,9 @@
 #define glColorMaski(i, r, g, b, a) glColorMask(r, g, b, a)
 //#define glMapBuffer(a, b) glMapBufferRange(a, b)
 //#define glMapBuffer(target, access) glMapBufferRange(target, 0, 0, access)
+
+#else
+
 #endif
 
 //#define glMapBuffer(a, b) glMapBufferRange(a, b)
