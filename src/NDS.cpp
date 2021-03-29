@@ -948,10 +948,12 @@ u32 RunFrame()
     bool runFrame = Running && !(CPUStop & 0x40000000);
     if (runFrame)
     {
+        //printf("start frame\n");
         GPU::StartFrame();
 
         while (Running && GPU::TotalScanlines==0)
         {
+            //printf("scanline\n");
             // TODO: give it some margin, so it can directly do 17 cycles instead of 16 then 1
             u64 target = NextTarget();
             ARM9Target = target << ARM9ClockShift;
@@ -981,8 +983,9 @@ u32 RunFrame()
 #endif
                     ARM9->Execute();
             }
-
+            //printf("run timers 0\n");
             RunTimers(0);
+            //printf("run GPU\n");
             GPU3D::Run();
 
             target = ARM9Timestamp >> ARM9ClockShift;
@@ -1009,7 +1012,7 @@ u32 RunFrame()
 #endif
                         ARM7->Execute();
                 }
-
+                //printf("run timers 1\n");
                 RunTimers(1);
             }
 
@@ -1031,8 +1034,9 @@ u32 RunFrame()
             ARM7Timestamp-SysTimestamp,
             GPU3D::Timestamp-SysTimestamp);
 #endif
+        //printf("SPU transfer\n");
         SPU::TransferOutput();
-
+        //printf("flush sram\n");
         NDSCart::FlushSRAMFile();
     }
 

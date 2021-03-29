@@ -29,7 +29,7 @@
 
 char* EmuDirectory;
 
-void emuStop();
+//void emuStop();
 
 #define PLATFORM_SEPARATOR std::filesystem::path::preferred_separator
 
@@ -56,7 +56,8 @@ void DeInit()
 
 void StopEmu()
 {
-    emuStop();
+    //emuStop();
+    abort();
 }
 
 FILE* OpenFile(const char* path, const char* mode, bool mustexist)
@@ -347,7 +348,7 @@ int MP_RecvPacket(u8* data, bool block)
 
 bool LAN_Init()
 {
-    throw "LAN NOT SUPPORTED";
+    //throw "LAN NOT SUPPORTED";
     return false;
     // if (Config::DirectLAN)
     // {
@@ -365,14 +366,15 @@ bool LAN_Init()
 
 void LAN_DeInit()
 {
-    throw "LAN NOT SUPPORTED";
+    //throw "LAN NOT SUPPORTED";
     // LAN_PCap::DeInit();
     // LAN_Socket::DeInit();
 }
 
 int LAN_SendPacket(u8* data, int len)
 {
-    throw "LAN NOT SUPPORTED";
+    //throw "LAN NOT SUPPORTED";
+    return 0;
     // if (Config::DirectLAN)
     //     return LAN_PCap::SendPacket(data, len);
     // else
@@ -381,7 +383,8 @@ int LAN_SendPacket(u8* data, int len)
 
 int LAN_RecvPacket(u8* data)
 {
-    throw "LAN NOT SUPPORTED";
+    //throw "LAN NOT SUPPORTED";
+    return 0;
     // if (Config::DirectLAN)
     //     return LAN_PCap::RecvPacket(data);
     // else

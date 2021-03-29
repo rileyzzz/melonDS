@@ -106,26 +106,23 @@ if (APPLE)
 endif()
 
 if (ENABLE_OGLRENDERER)
-    #find_package(PkgConfig REQUIRED)
-    #find_package(SDL2 REQUIRED)
-    find_package(GLEW REQUIRED)
+    find_package(PkgConfig REQUIRED)
     #pkg_check_modules(EPOXY REQUIRED epoxy)
     
-    #set(EPOXY_INCLUDE_DIRS  /workspace/melonDS/cmake/Modules/empoxy/include
-                            #/workspace/melonDS/cmake/Modules/empoxy/build/include
-                            #/workspace/melonDS/cmake/Modules/empoxy/src
-                            #/workspace/melonDS/cmake/Modules/empoxy/build/src)
-    #target_link_directories(core PUBLIC /workspace/melonDS/cmake/Modules/empoxy/build/src)
-    #set(EPOXY_LIBRARIES     epoxy)
-    target_link_directories(core PUBLIC G:/libraries/SDL2-2.0.14/lib/x64 G:/libraries/glew-2.1.0/lib/Release/x64)
+    set(EPOXY_INCLUDE_DIRS  /workspace/melonDS/cmake/Modules/empoxy/include
+                            /workspace/melonDS/cmake/Modules/empoxy/build/include
+                            /workspace/melonDS/cmake/Modules/empoxy/src
+                            /workspace/melonDS/cmake/Modules/empoxy/build/src)
+    target_link_directories(core PUBLIC /workspace/melonDS/cmake/Modules/empoxy/build/src)
+    set(EPOXY_LIBRARIES     epoxy)
 
-    target_include_directories(core PRIVATE G:/libraries/SDL2-2.0.14/include ${GLEW_INCLUDE_DIRS})
+    target_include_directories(core PRIVATE ${EPOXY_INCLUDE_DIRS})
     if (WIN32)
-        target_link_libraries(core ole32 comctl32 ws2_32 opengl32 SDL2 SDL2main glew32s)
+        target_link_libraries(core ole32 comctl32 ws2_32 ${EPOXY_LIBRARIES})
     elseif (APPLE)
-        target_link_libraries(core SDL2 SDL2main glew32s)
+        target_link_libraries(core ${EPOXY_LIBRARIES})
     else()
-        target_link_libraries(core rt SDL2 SDL2main glew32s)
+        target_link_libraries(core rt ${EPOXY_LIBRARIES})
     endif()
 else()
 	if (WIN32)
@@ -140,9 +137,11 @@ if(EMSCRIPTEN)
     #debug
     #set(EM_CORE_FLAGS "-s USE_WEBGL2=1 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread") # -Wl --shared-memory
     #fast
-    set(EM_CORE_FLAGS "-O3 -s USE_WEBGL2=1 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread")
+    set(EM_CORE_FLAGS "-fno-rtti -O3 -s USE_WEBGL2=1 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread")
     #set_target_properties(core PROPERTIES LINK_FLAGS ${EM_CORE_FLAGS})
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${EM_CORE_FLAGS}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EM_CORE_FLAGS}")
+
+    set_target_properties(core PROPERTIES COMPILE_FLAGS "-O3")
 endif()

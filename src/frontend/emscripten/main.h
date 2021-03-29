@@ -3,9 +3,10 @@
 #include <string>
 #include <algorithm>
 #include <thread>
+#include <mutex>
 
 //#include <epoxy/gl.h>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "Shader.h"
 #include "FrontendUtil.h"
@@ -35,7 +36,8 @@ public:
     //void resizeEvent(QResizeEvent* event) override;
     void resizeGL(int w, int h);
 
-    void setupScreenLayout(int w, int h);
+    void setupScreenLayout();
+    void screenSetupLayout(int w, int h);
 };
 
 class EmuThread
@@ -57,6 +59,7 @@ private:
     double frameLimitError;
     double lastMeasureTime;
     char melontitle[100];
+    SDL_GLContext oglContext;
 
 public:
     int FrontBuffer = 0;
@@ -74,7 +77,9 @@ public:
     void run();
     void frame();
 
-    void renderLoop();
+    //void renderLoop();
+
+    void changeWindowTitle(char* title);
 
     void emuRun();
     void emuPause();
