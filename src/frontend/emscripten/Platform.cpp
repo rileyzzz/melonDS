@@ -62,6 +62,7 @@ void StopEmu()
 
 FILE* OpenFile(const char* path, const char* mode, bool mustexist)
 {
+    printf("opening file %s\n", path);
     std::filesystem::path f(path);
     if (mustexist && !std::filesystem::exists(path))
     {
@@ -88,6 +89,7 @@ FILE* OpenFile(const char* path, const char* mode, bool mustexist)
 
 FILE* OpenLocalFile(const char* path, const char* mode)
 {
+    printf("open local file %s\n", path);
     std::filesystem::path dir(path);
     std::string fullpath;
 

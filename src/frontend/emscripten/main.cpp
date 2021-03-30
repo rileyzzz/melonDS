@@ -298,18 +298,18 @@ void main_loop()
     //SDL_Delay(1000);
 }
 
-void EmuThread::start(const char* file)
+void EmuThread::start()
 {
     emscripten_set_main_loop(main_loop, 0, 0);
 
     emuRun();
     //run();
-    _thread = new std::thread( [this, file] { this->run(file); } );
+    _thread = new std::thread( [this] { this->run(); } );
     _thread->detach();
     
 }
 
-void EmuThread::run(const char* file)
+void EmuThread::run()
 {
     //bool hasOGL = mainWindow->hasOGL;
     u32 mainScreenPos[3];
@@ -352,7 +352,7 @@ void EmuThread::run(const char* file)
     char melontitle[100];
 
 
-    //char* file = "mkds.nds";
+    const char* file = "rom.nds";
 
     int res = Frontend::LoadROM(file, Frontend::ROMSlot_NDS);
     if (res == Frontend::Load_OK)
@@ -538,7 +538,8 @@ void EmuThread::frame()
            //SDL_LockMutex(audioSyncLock);
            while (SPU::GetOutputSize() > 1024)
            {
-               int ret = SDL_CondWaitTimeout(audioSync, audioSyncLock, 500);
+               //int ret = SDL_CondWaitTimeout(audioSync, audioSyncLock, 500);
+               int ret = SDL_CondWaitTimeout(audioSync, audioSyncLock, 20);
                if (ret == SDL_MUTEX_TIMEDOUT) break;
            }
            //SDL_UnlockMutex(audioSyncLock);
@@ -546,29 +547,29 @@ void EmuThread::frame()
 
         double frametimeStep = nlines / (60.0 * 263.0);
 
-        {
-            bool limitfps = Config::LimitFPS && !fastforward;
+        // {
+        //     bool limitfps = Config::LimitFPS && !fastforward;
 
-            double practicalFramelimit = limitfps ? frametimeStep : 1.0 / 1000.0;
+        //     double practicalFramelimit = limitfps ? frametimeStep : 1.0 / 1000.0;
 
-            double curtime = SDL_GetPerformanceCounter() * perfCountsSec;
+        //     double curtime = SDL_GetPerformanceCounter() * perfCountsSec;
 
-            frameLimitError += practicalFramelimit - (curtime - lastTime);
-            if (frameLimitError < -practicalFramelimit)
-                frameLimitError = -practicalFramelimit;
-            if (frameLimitError > practicalFramelimit)
-                frameLimitError = practicalFramelimit;
+        //     frameLimitError += practicalFramelimit - (curtime - lastTime);
+        //     if (frameLimitError < -practicalFramelimit)
+        //         frameLimitError = -practicalFramelimit;
+        //     if (frameLimitError > practicalFramelimit)
+        //         frameLimitError = practicalFramelimit;
 
-            if (round(frameLimitError * 1000.0) > 0.0)
-            {
-                SDL_Delay(round(frameLimitError * 1000.0));
-                double timeBeforeSleep = curtime;
-                curtime = SDL_GetPerformanceCounter() * perfCountsSec;
-                frameLimitError -= curtime - timeBeforeSleep;
-            }
+        //     if (round(frameLimitError * 1000.0) > 0.0)
+        //     {
+        //         SDL_Delay(round(frameLimitError * 1000.0));
+        //         double timeBeforeSleep = curtime;
+        //         curtime = SDL_GetPerformanceCounter() * perfCountsSec;
+        //         frameLimitError -= curtime - timeBeforeSleep;
+        //     }
 
-            lastTime = curtime;
-        }
+        //     lastTime = curtime;
+        // }
 
         nframes++;
         if (nframes >= 30)
@@ -606,6 +607,7 @@ void EmuThread::frame()
 
 void EmuThread::changeWindowTitle(char* title)
 {
+    emscripten_set_window_title(title);
     //emit windowTitleChange(QString(title));
 }
 
@@ -976,9 +978,9 @@ void onMouseMove(SDL_MouseMotionEvent* event)
 //https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
 extern "C"
 {
-    int file_drag(const char* str)
+    int file_drag() //const char* str
     {
-        emuThread->start(str);
+        emuThread->start();
         return 0;
     }
 
@@ -989,6 +991,7 @@ extern "C"
     }
 }
 
+//https://stackoverflow.com/questions/54617194/how-to-save-files-from-c-to-browser-storage-with-emscripten
 int main(int argc, char** argv)
 {
     srand(time(NULL));
@@ -1141,16 +1144,17 @@ int main(int argc, char** argv)
                 console.log("filename " + file.name);
                 let filename = file.name;
 
-                let stream = FS.open(filename, 'w+');
+                let stream = FS.open("rom.nds", 'w+');
                 FS.write(stream, data, 0, data.length, 0);
                 FS.close(stream);
 
                 if(++loadedFiles == maxFiles) {
                     console.log("Load complete.");
-                    Module.ccall('file_drag', // name of C function
-                        'number', // return type
-                        ['string'], // argument types
-                        [filename]);
+                    // Module.ccall('file_drag', // name of C function
+                    //     'number', // return type
+                    //     ['string'], // argument types
+                    //     ["rom.nds"]);
+                    Module.ccall('file_drag');
                 }
 
                 console.log("Loaded file " + loadedFiles.toString() + "/" + maxFiles.toString());

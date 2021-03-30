@@ -47,15 +47,16 @@ if(EMSCRIPTEN)
     #-s USE_PTHREADS=1 -pthread --shared-memory --no-check-features -Wl
 
     #debug
-    #set(EM_FLAGS "-g -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s USE_WEBGL2=1 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --preload-file /workspace/melonDS/firmware@/")
+    #set(EM_FLAGS "-g -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --preload-file /workspace/melonDS/firmware@/")
     #fast
-    set(EM_FLAGS "-fno-rtti -O3 -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s USE_WEBGL2=1 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_triggerFullscreen\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --preload-file /workspace/melonDS/firmware@/")
-
+    # -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1  -fno-exceptions  -s OFFSCREEN_FRAMEBUFFER=1 
+    set(EM_FLAGS "-fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_triggerFullscreen\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --preload-file /workspace/melonDS/firmware@/")
+    
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${EM_FLAGS}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EM_FLAGS}")
 
     #set_target_properties(melonDS PROPERTIES LINK_FLAGS "-s USE_WEBGL2=1 -s EXPORTED_FUNCTIONS='[\"_main\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' -s ALLOW_MEMORY_GROWTH=1 --preload-file /workspace/melonDS/src/data@/")
-    set_target_properties(melonDS PROPERTIES COMPILE_FLAGS "-O3 -s USE_BOOST_HEADERS=1")
+    set_target_properties(melonDS PROPERTIES COMPILE_FLAGS "-g0 -O3 -s USE_BOOST_HEADERS=1")
 endif()
 
 #target_include_directories(melonDS PRIVATE ${SDL2_INCLUDE_DIRS} ${SLIRP_INCLUDE_DIRS} ${LIBARCHIVE_INCLUDE_DIRS})

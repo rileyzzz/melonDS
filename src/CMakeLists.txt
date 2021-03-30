@@ -135,13 +135,14 @@ endif()
 #emscripten options and other fun stuff
 if(EMSCRIPTEN)
     #debug
-    #set(EM_CORE_FLAGS "-s USE_WEBGL2=1 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread") # -Wl --shared-memory
+    #set(EM_CORE_FLAGS "-s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread") # -Wl --shared-memory
     #fast
-    set(EM_CORE_FLAGS "-fno-rtti -O3 -s USE_WEBGL2=1 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread")
+    # -s USE_REGAL=1 -s FULL_ES2=1 -fno-exceptions  -s OFFSCREEN_FRAMEBUFFER=1
+    set(EM_CORE_FLAGS "-fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread")
     #set_target_properties(core PROPERTIES LINK_FLAGS ${EM_CORE_FLAGS})
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${EM_CORE_FLAGS}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EM_CORE_FLAGS}")
 
-    set_target_properties(core PROPERTIES COMPILE_FLAGS "-O3")
+    set_target_properties(core PROPERTIES COMPILE_FLAGS "-g0 -O3")
 endif()
