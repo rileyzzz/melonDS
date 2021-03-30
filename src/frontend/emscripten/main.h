@@ -79,8 +79,8 @@ public:
     void initOpenGL();
     void deinitOpenGL();
 
-    void start();
-    void run();
+    void start(const char* file);
+    void run(const char* file);
     void frame();
 
     //void renderLoop();

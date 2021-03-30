@@ -298,18 +298,18 @@ void main_loop()
     //SDL_Delay(1000);
 }
 
-void EmuThread::start()
+void EmuThread::start(const char* file)
 {
     emscripten_set_main_loop(main_loop, 0, 0);
 
     emuRun();
     //run();
-    _thread = new std::thread( [this] { this->run(); } );
+    _thread = new std::thread( [this, file] { this->run(file); } );
     _thread->detach();
     
 }
 
-void EmuThread::run()
+void EmuThread::run(const char* file)
 {
     //bool hasOGL = mainWindow->hasOGL;
     u32 mainScreenPos[3];
@@ -352,7 +352,7 @@ void EmuThread::run()
     char melontitle[100];
 
 
-    char* file = "mkds.nds";
+    //char* file = "mkds.nds";
 
     int res = Frontend::LoadROM(file, Frontend::ROMSlot_NDS);
     if (res == Frontend::Load_OK)
@@ -533,16 +533,16 @@ void EmuThread::frame()
 
         bool fastforward = Input::HotkeyDown(HK_FastForward);
 
-        //if (Config::AudioSync && (!fastforward) && audioDevice)
-        //{
-        //    SDL_LockMutex(audioSyncLock);
-        //    while (SPU::GetOutputSize() > 1024)
-        //    {
-        //        int ret = SDL_CondWaitTimeout(audioSync, audioSyncLock, 500);
-        //        if (ret == SDL_MUTEX_TIMEDOUT) break;
-        //    }
-        //    SDL_UnlockMutex(audioSyncLock);
-        //}
+        if (Config::AudioSync && (!fastforward) && audioDevice)
+        {
+           //SDL_LockMutex(audioSyncLock);
+           while (SPU::GetOutputSize() > 1024)
+           {
+               int ret = SDL_CondWaitTimeout(audioSync, audioSyncLock, 500);
+               if (ret == SDL_MUTEX_TIMEDOUT) break;
+           }
+           //SDL_UnlockMutex(audioSyncLock);
+        }
 
         double frametimeStep = nlines / (60.0 * 263.0);
 
@@ -726,8 +726,11 @@ EM_BOOL fullscreenchange_callback(int eventType, const EmscriptenFullscreenChang
     //EM_ASM(alert("fullscreen"););
     //printf("fullscreen\n");
     //emscripten_request_fullscreen("canvas", 1);
-    SDL_SetWindowSize(mainWindow, 640, 480);
+    //int width = 640;
+    //int height = 480;
+    //SDL_SetWindowSize(mainWindow, width, height);
     panelGL->setupScreenLayout();
+    //EM_ASM(setTimeout(function(){var canvas = document.getElementById('canvas'); canvas.width = $0; canvas.height = $1;}, 50), width, height);
     return 0;
 }
 
@@ -903,7 +906,7 @@ void ScreenPanelGL::paintGL()
 
 void keyPressEvent(SDL_KeyboardEvent* event)
 {
-    //if (event->isAutoRepeat()) return;
+    //if (event->repeat) return;
 
     // TODO!! REMOVE ME IN RELEASE BUILDS!!
     //if (event->key() == Qt::Key_F11) NDS::debug(0);
@@ -913,7 +916,7 @@ void keyPressEvent(SDL_KeyboardEvent* event)
 
 void keyReleaseEvent(SDL_KeyboardEvent* event)
 {
-    //if (event->isAutoRepeat()) return;
+    //if (event->repeat) return;
 
     Input::KeyRelease(event);
 }
@@ -968,6 +971,22 @@ void onMouseMove(SDL_MouseMotionEvent* event)
     else if (y > 191) y = 191;
 
     NDS::TouchScreen(x, y);
+}
+
+//https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
+extern "C"
+{
+    int file_drag(const char* str)
+    {
+        emuThread->start(str);
+        return 0;
+    }
+
+    int triggerFullscreen()
+    {
+        emscripten_request_fullscreen("canvas", 1);
+        return 0;
+    }
 }
 
 int main(int argc, char** argv)
@@ -1097,7 +1116,61 @@ int main(int argc, char** argv)
     //emscripten_request_fullscreen("canvas", 1);
 
     emuThread = new EmuThread();
-    emuThread->start();
+    
+
+    EM_ASM(
+        function dragover_handler(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+        }
+
+        function dropHandler(event) {
+            event.preventDefault();
+            //Module._file_drag();
+            //alert('drag event');
+            let loadedFiles = 0;
+            let maxFiles = event.dataTransfer.files.length;
+
+            //for(let i = 0; i < event.dataTransfer.files.length; i++) {
+            const file = event.dataTransfer.files[0];
+            let reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+
+            reader.onload = function() {
+                let data = new Uint8Array(reader.result);
+                console.log("filename " + file.name);
+                let filename = file.name;
+
+                let stream = FS.open(filename, 'w+');
+                FS.write(stream, data, 0, data.length, 0);
+                FS.close(stream);
+
+                if(++loadedFiles == maxFiles) {
+                    console.log("Load complete.");
+                    Module.ccall('file_drag', // name of C function
+                        'number', // return type
+                        ['string'], // argument types
+                        [filename]);
+                }
+
+                console.log("Loaded file " + loadedFiles.toString() + "/" + maxFiles.toString());
+            };
+            //}
+            //alert("drag data " + data);
+        }
+        let em_canvas = document.getElementById('canvas');
+
+        em_canvas.addEventListener('dragover', dragover_handler, false);
+        em_canvas.addEventListener('drop', dropHandler, false);
+        
+
+        let fs_button = document.getElementById('fullscreen');
+        if(fs_button) {
+            fs_button.onclick = function() {
+                Module.ccall('triggerFullscreen');
+            }
+        }
+    );
 
     //emuThread->emuPause();
 
