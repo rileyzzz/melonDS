@@ -1245,13 +1245,14 @@ int main(int argc, char** argv)
         if(download_button) {
             download_button.onclick = function() {
                 if(romPath !== "") {
-                    var savPath = "saved/" + romPath.substr(0, romPath.lastIndexOf(".")) + ".sav";
+                    var saveFile = romPath.substr(0, romPath.lastIndexOf(".")) + ".sav";
+                    var savPath = "saved/" + saveFile;
                     alert("download rom save " + savPath);
                     let content = FS.readFile(savPath);
 
                     var a = document.createElement('a');
-                    a.download = filename;
-                    a.href = URL.createObjectURL(new Blob([content], {type: mime}));
+                    a.download = saveFile;
+                    a.href = URL.createObjectURL(new Blob([content], {type: 'application/octet-stream'}));
                     a.style.display = 'none';
 
                     document.body.appendChild(a);
@@ -1263,6 +1264,36 @@ int main(int argc, char** argv)
                 }
             }
         }
+        let open_button = document.getElementById('opensave');
+        let filebrowser = document.getElementById('inputsave');
+        if(filebrowser) {
+            filebrowser.addEventListener("change", function () {
+                const fileList = this.files;
+                //alert("selected " + fileList.length);
+                for (let i = 0, numFiles = fileList.length; i < numFiles; i++) {
+                    const file = fileList[i];
+
+                    var savFile = "saved/" + file.name;
+                    var fr = new FileReader(); 
+                    fr.onload = function () {
+                        var data = new Uint8Array(fr.result);
+                        FS.writeFile(savFile, data);
+                        console.log("saved file " + savFile);
+                        //sync
+                        FS.syncfs(function (err) {
+                            assert(!err);
+                        });
+                    };
+                    fr.readAsArrayBuffer(file);
+                }
+            }, false);
+        }
+        if(open_button && filebrowser) {
+            open_button.onclick = function() {
+                filebrowser.click();
+            }
+        }
+        
     );
 
     //emuThread->emuPause();

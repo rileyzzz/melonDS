@@ -26,6 +26,11 @@
 #include "NDSCart_SRAMManager.h"
 #include "Platform.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
+
 namespace NDSCart_SRAMManager
 {
 
@@ -158,6 +163,13 @@ void FlushSecondaryBuffer(u8* dst, s32 dstLength)
             printf("NDS SRAM: Written\n");
             fwrite(SecondaryBuffer, SecondaryBufferLength, 1, f);
             fclose(f);
+
+            EM_ASM(
+                FS.syncfs(function (err) {
+                    assert(!err);
+                    console.log("Synchronized IDBFS");
+                });
+            );
         }
     }
     PreviousFlushVersion = FlushVersion;
