@@ -309,6 +309,29 @@ void EmuThread::start()
     
 }
 
+int LoadROMFile(const char* file)
+{
+        //LoadROM(const u8 *romdata, u32 romlength, const char *archivefilename, const char *romfilename, const char *sramfilename, int slot)
+    std::filesystem::path filepath(file);
+    std::string savepath = "saved/" + filepath.stem().string() + ".sav";
+    printf("ROM save path %s\n", savepath.c_str());
+    FILE* romFile = Platform::OpenFile(file, "rb", true);
+    if(romFile)
+    {
+        fseek(romFile, 0, SEEK_END);
+        u32 size = ftell(romFile);
+        u8* romData = new u8[size];
+        rewind(romFile);
+        fread(romData, size, 1, romFile);
+        fclose(romFile);
+        int res = Frontend::LoadROM(romData, size, file, file, savepath.c_str(), Frontend::ROMSlot_NDS);
+        delete[] romData;
+        return res;
+    }
+
+    return -1;
+}
+
 void EmuThread::run()
 {
     //bool hasOGL = mainWindow->hasOGL;
@@ -359,7 +382,8 @@ void EmuThread::run()
     //FILE* romData = Platform::OpenFile(file, const char* mode, bool mustexist)
     
     
-    int res = Frontend::LoadROM(file, Frontend::ROMSlot_NDS);
+    // int res = Frontend::LoadROM(file, Frontend::ROMSlot_NDS);
+    int res = LoadROMFile(file);
     if (res != Frontend::Load_OK)
     {
         printf("Rom load failed, error %d\n", res);
@@ -1013,7 +1037,8 @@ int main(int argc, char** argv)
 
         // Then sync
         FS.syncfs(true, function (err) {
-            console.error("error on IDBFS sync");
+            assert(!err);
+            //if(err) console.error("error on IDBFS sync");
         });
     );
 
@@ -1152,6 +1177,7 @@ int main(int argc, char** argv)
             event.dataTransfer.dropEffect = 'move';
         }
 
+        var romPath = "";
         function dropHandler(event) {
             event.preventDefault();
             //Module._file_drag();
@@ -1168,6 +1194,7 @@ int main(int argc, char** argv)
                 let data = new Uint8Array(reader.result);
                 console.log("filename " + file.name);
                 let filename = file.name;
+                romPath = "" + file.name;
 
                 let stream = FS.open(filename, 'w+');
                 FS.write(stream, data, 0, data.length, 0);
@@ -1207,9 +1234,33 @@ int main(int argc, char** argv)
                 
                 //sync
                 FS.syncfs(function (err) {
-                    alert("error saving IDBFS");
+                    assert(!err);
+                    //if(err) alert("error saving IDBFS");
                     // Error
                 });
+            }
+        }
+
+        let download_button = document.getElementById('downloadsave');
+        if(download_button) {
+            download_button.onclick = function() {
+                if(romPath !== "") {
+                    var savPath = "saved/" + romPath.substr(0, romPath.lastIndexOf(".")) + ".sav";
+                    alert("download rom save " + savPath);
+                    let content = FS.readFile(savPath);
+
+                    var a = document.createElement('a');
+                    a.download = filename;
+                    a.href = URL.createObjectURL(new Blob([content], {type: mime}));
+                    a.style.display = 'none';
+
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(a.href);
+                    }, 2000);
+                }
             }
         }
     );
