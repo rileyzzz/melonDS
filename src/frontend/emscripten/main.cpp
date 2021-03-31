@@ -60,7 +60,7 @@
 #endif
 
 // TODO: uniform variable spelling
-
+char ActiveROM[255];
 bool RunningSomething;
 
 EmuThread* emuThread;
@@ -352,11 +352,18 @@ void EmuThread::run()
     char melontitle[100];
 
 
-    const char* file = "rom.nds";
-
+    //const char* file = "rom.nds";
+    const char* file = ActiveROM;
+    
+    //LoadROM(const u8 *romdata, u32 romlength, const char *archivefilename, const char *romfilename, const char *sramfilename, int slot)
+    //FILE* romData = Platform::OpenFile(file, const char* mode, bool mustexist)
+    
+    
     int res = Frontend::LoadROM(file, Frontend::ROMSlot_NDS);
-    if (res == Frontend::Load_OK)
+    if (res != Frontend::Load_OK)
     {
+        printf("Rom load failed, error %d\n", res);
+        return;
         //emuThread->emuRun();
     }
 
@@ -978,8 +985,10 @@ void onMouseMove(SDL_MouseMotionEvent* event)
 //https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
 extern "C"
 {
-    int file_drag() //const char* str
+    int file_drag(const char* str) //const char* str
     {
+        printf("file drag %s\n", str);
+        strcpy(ActiveROM, str);
         emuThread->start();
         return 0;
     }
@@ -994,6 +1003,22 @@ extern "C"
 //https://stackoverflow.com/questions/54617194/how-to-save-files-from-c-to-browser-storage-with-emscripten
 int main(int argc, char** argv)
 {
+    memset(ActiveROM, 0, sizeof(ActiveROM));
+    //setup offline storage
+    EM_ASM(
+        // Make a directory other than '/'
+        FS.mkdir('/saved');
+        // Then mount with IDBFS type
+        FS.mount(IDBFS, {}, '/saved');
+
+        // Then sync
+        FS.syncfs(true, function (err) {
+            console.error("error on IDBFS sync");
+        });
+    );
+
+
+
     srand(time(NULL));
 
     printf("melonDS " MELONDS_VERSION "\n");
@@ -1144,18 +1169,19 @@ int main(int argc, char** argv)
                 console.log("filename " + file.name);
                 let filename = file.name;
 
-                let stream = FS.open("rom.nds", 'w+');
+                let stream = FS.open(filename, 'w+');
                 FS.write(stream, data, 0, data.length, 0);
                 FS.close(stream);
 
-                if(++loadedFiles == maxFiles) {
-                    console.log("Load complete.");
-                    // Module.ccall('file_drag', // name of C function
-                    //     'number', // return type
-                    //     ['string'], // argument types
-                    //     ["rom.nds"]);
-                    Module.ccall('file_drag');
-                }
+                console.log("Load complete.");
+                var ptr  = allocate(intArrayFromString(file.name), 'i8', ALLOC_NORMAL);
+                Module.ccall('file_drag', // name of C function
+                    'number', // return type
+                    ['string'], // argument types
+                    [file.name]);
+                _free(ptr);
+
+                //Module.ccall('file_drag');
 
                 console.log("Loaded file " + loadedFiles.toString() + "/" + maxFiles.toString());
             };
@@ -1172,6 +1198,18 @@ int main(int argc, char** argv)
         if(fs_button) {
             fs_button.onclick = function() {
                 Module.ccall('triggerFullscreen');
+            }
+        }
+
+        let save_button = document.getElementById('save');
+        if(save_button) {
+            save_button.onclick = function() {
+                
+                //sync
+                FS.syncfs(function (err) {
+                    alert("error saving IDBFS");
+                    // Error
+                });
             }
         }
     );
