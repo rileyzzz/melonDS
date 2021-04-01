@@ -14,6 +14,9 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+extern SDL_mutex* save_mutex;
+extern bool syncRequired;
+
 void keyPressEvent(SDL_KeyboardEvent* event);
 void keyReleaseEvent(SDL_KeyboardEvent* event);
 void onMousePress(SDL_MouseButtonEvent* event);

@@ -29,6 +29,9 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/html5.h>
+#include <SDL2/SDL.h>
+extern SDL_mutex* save_mutex;
+extern bool syncRequired;
 #endif
 
 namespace NDSCart_SRAMManager
@@ -163,13 +166,14 @@ void FlushSecondaryBuffer(u8* dst, s32 dstLength)
             printf("NDS SRAM: Written\n");
             fwrite(SecondaryBuffer, SecondaryBufferLength, 1, f);
             fclose(f);
+            
+#ifdef __EMSCRIPTEN__
+        //signal to the main thread that a sync is required
+        SDL_LockMutex(save_mutex);
+        syncRequired = true;
+        SDL_UnlockMutex(save_mutex);
+#endif
 
-            EM_ASM(
-                FS.syncfs(function (err) {
-                    assert(!err);
-                    console.log("Synchronized IDBFS");
-                });
-            );
         }
     }
     PreviousFlushVersion = FlushVersion;

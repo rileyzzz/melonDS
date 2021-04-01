@@ -91,6 +91,9 @@ ScreenPanelGL* panelGL;
 
 bool hasOGL = true;
 
+SDL_mutex* save_mutex;
+bool syncRequired = false;
+
 void audioCallback(void* data, Uint8* stream, int len)
 {
     //return;
@@ -1022,13 +1025,38 @@ extern "C"
         emscripten_request_fullscreen("canvas", 1);
         return 0;
     }
+
+    int sync_check()
+    {
+        SDL_LockMutex(save_mutex);
+        if(syncRequired)
+        {
+            EM_ASM(alert("sync"););
+            syncRequired = false;
+            EM_ASM(
+                //syncSaved(); 
+            
+                FS.syncfs(function (err) {
+                    assert(!err);
+
+                    console.log("IDBFS synchronized.");
+                    //if(err) alert("error saving IDBFS");
+                    // Error
+                });
+            );
+        }
+        SDL_UnlockMutex(save_mutex);
+        return 0;
+    }
 }
 
 //https://stackoverflow.com/questions/54617194/how-to-save-files-from-c-to-browser-storage-with-emscripten
 int main(int argc, char** argv)
 {
     memset(ActiveROM, 0, sizeof(ActiveROM));
+
     //setup offline storage
+    save_mutex = SDL_CreateMutex();
     EM_ASM(
         // Make a directory other than '/'
         FS.mkdir('/saved');
@@ -1040,6 +1068,16 @@ int main(int argc, char** argv)
             assert(!err);
             //if(err) console.error("error on IDBFS sync");
         });
+
+        function syncSaved() {
+            FS.syncfs(function (err) {
+                assert(!err);
+
+                console.log("IDBFS synchronized.");
+                //if(err) alert("error saving IDBFS");
+                // Error
+            });
+        }
     );
 
 
@@ -1231,13 +1269,8 @@ int main(int argc, char** argv)
         let save_button = document.getElementById('save');
         if(save_button) {
             save_button.onclick = function() {
-                
                 //sync
-                FS.syncfs(function (err) {
-                    assert(!err);
-                    //if(err) alert("error saving IDBFS");
-                    // Error
-                });
+                syncSaved();
             }
         }
 
@@ -1295,6 +1328,16 @@ int main(int argc, char** argv)
         }
         
     );
+
+
+    //keep checking for save requests in the main thread
+    EM_ASM(
+        setInterval(function() {
+            Module.ccall('sync_check');
+        }, 500);
+
+    );
+
 
     //emuThread->emuPause();
 
