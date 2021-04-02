@@ -1031,100 +1031,114 @@ extern "C"
         SDL_LockMutex(save_mutex);
         if(syncRequired)
         {
-            EM_ASM(alert("sync"););
+            //EM_ASM(alert("sync"););
             syncRequired = false;
             EM_ASM(
-                //syncSaved(); 
-            
                 FS.syncfs(function (err) {
                     assert(!err);
-
                     console.log("IDBFS synchronized.");
-                    //if(err) alert("error saving IDBFS");
-                    // Error
                 });
             );
         }
         SDL_UnlockMutex(save_mutex);
         return 0;
     }
+
+#define BIOS_7 1 << 0
+#define BIOS_9 1 << 1
+#define FIRMWARE 1 << 2
+    //checks for bios, firmware etc
+    int check_required_files()
+    {
+
+        FILE* f;
+        long len;
+
+        int missing = 0;
+
+        f = Platform::OpenLocalFile(Config::BIOS9Path, "rb");
+        if (f)
+        {
+            fseek(f, 0, SEEK_END);
+            len = ftell(f);
+            if (len != 0x1000)
+            {
+                printf("Invalid BIOS9 size\n");
+                missing |= BIOS_9;
+            }
+
+            fclose(f);
+        }
+        else
+            missing |= BIOS_9;
+
+        f = Platform::OpenLocalFile(Config::BIOS7Path, "rb");
+        if (f)
+        {
+            fseek(f, 0, SEEK_END);
+            len = ftell(f);
+            if (len != 0x4000)
+            {
+                printf("Invalid BIOS7 size\n");
+                missing |= BIOS_7;
+            }
+
+            fclose(f);
+        }
+        else
+            missing |= BIOS_7;
+        
+        f = Platform::OpenLocalFile(Config::FirmwarePath, "rb");
+        if (f)
+        {
+            fseek(f, 0, SEEK_END);
+            len = ftell(f);
+            if (len == 0x20000)
+            {
+                // 128KB firmware, not bootable
+                printf("Firmware not bootable!\n");
+                missing |= FIRMWARE;
+            }
+            else if (len != 0x40000 && len != 0x80000)
+            {
+                printf("Bad firmware!\n");
+                missing |= FIRMWARE;
+            }
+
+            fclose(f);
+        }
+        else
+            missing |= FIRMWARE;
+
+
+        if(missing & BIOS_7)
+            EM_ASM( let fb = document.getElementById('bios7'); if(fb) fb.style.display = 'block'; );
+        else
+            EM_ASM( let fb = document.getElementById('bios7'); if(fb) fb.style.display = 'none'; );
+
+        if(missing & BIOS_9)
+            EM_ASM( let fb = document.getElementById('bios9'); if(fb) fb.style.display = 'block'; );
+        else
+            EM_ASM( let fb = document.getElementById('bios9'); if(fb) fb.style.display = 'none'; );
+        
+        if(missing & FIRMWARE)
+            EM_ASM( let fb = document.getElementById('firmware'); if(fb) fb.style.display = 'block'; );
+        else
+            EM_ASM( let fb = document.getElementById('firmware'); if(fb) fb.style.display = 'none'; );
+        
+
+        if(missing == 0)
+        {
+            EM_ASM( let fb = document.getElementById('needed'); if(fb) fb.style.display = 'none'; );
+            startEmuMain();
+        }
+
+        return 0;
+    }
 }
 
-//https://stackoverflow.com/questions/54617194/how-to-save-files-from-c-to-browser-storage-with-emscripten
-int main(int argc, char** argv)
+int startEmuMain()
 {
-    memset(ActiveROM, 0, sizeof(ActiveROM));
-
-    //setup offline storage
-    save_mutex = SDL_CreateMutex();
-    EM_ASM(
-        // Make a directory other than '/'
-        FS.mkdir('/saved');
-        // Then mount with IDBFS type
-        FS.mount(IDBFS, {}, '/saved');
-
-        // Then sync
-        FS.syncfs(true, function (err) {
-            assert(!err);
-            //if(err) console.error("error on IDBFS sync");
-        });
-
-        function syncSaved() {
-            FS.syncfs(function (err) {
-                assert(!err);
-
-                console.log("IDBFS synchronized.");
-                //if(err) alert("error saving IDBFS");
-                // Error
-            });
-        }
-    );
-
-
-
-    srand(time(NULL));
-
-    printf("melonDS " MELONDS_VERSION "\n");
-    printf(MELONDS_URL "\n");
-
-    Platform::Init(argc, argv);
-
-    //QApplication melon(argc, argv);
-    //melon.setWindowIcon(QIcon(":/melon-icon"));
-
-    // http://stackoverflow.com/questions/14543333/joystick-wont-work-using-sdl
-    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
-
-    if (SDL_Init(SDL_INIT_HAPTIC) < 0)
-    {
-        printf("SDL couldn't init rumble\n");
-    }
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
-    {
-        //QMessageBox::critical(NULL, "melonDS", "SDL shat itself :(");
-        printf("SDL shat itself :(\n");
-        return 1;
-    }
-
-    SDL_JoystickEventState(SDL_ENABLE);
-
-    Config::Load();
-
-#define SANITIZE(var, min, max)  { var = std::clamp(var, min, max); }
-    SANITIZE(Config::ConsoleType, 0, 1);
-    SANITIZE(Config::_3DRenderer, 0, 1);
-    SANITIZE(Config::ScreenVSyncInterval, 1, 20);
-    SANITIZE(Config::GL_ScaleFactor, 1, 16);
-    SANITIZE(Config::AudioVolume, 0, 256);
-    SANITIZE(Config::MicInputType, 0, 3);
-    SANITIZE(Config::ScreenRotation, 0, 3);
-    SANITIZE(Config::ScreenGap, 0, 500);
-    SANITIZE(Config::ScreenLayout, 0, 3);
-    SANITIZE(Config::ScreenSizing, 0, 5);
-    SANITIZE(Config::ScreenAspectTop, 0, 4);
-    SANITIZE(Config::ScreenAspectBot, 0, 4);
-#undef SANITIZE
-
     audioSync = SDL_CreateCond();
     audioSyncLock = SDL_CreateMutex();
 
@@ -1270,7 +1284,13 @@ int main(int argc, char** argv)
         if(save_button) {
             save_button.onclick = function() {
                 //sync
-                syncSaved();
+                FS.syncfs(function (err) {
+                    assert(!err);
+
+                    console.log("IDBFS synchronized.");
+                    //if(err) alert("error saving IDBFS");
+                    // Error
+                });
             }
         }
 
@@ -1334,8 +1354,7 @@ int main(int argc, char** argv)
     EM_ASM(
         setInterval(function() {
             Module.ccall('sync_check');
-        }, 500);
-
+        }, 200);
     );
 
 
@@ -1375,5 +1394,81 @@ int main(int argc, char** argv)
     //SDL_Quit();
     //Platform::DeInit();
     //return ret;
+
+    return 0;
+}
+
+//https://stackoverflow.com/questions/54617194/how-to-save-files-from-c-to-browser-storage-with-emscripten
+int main(int argc, char** argv)
+{
+    memset(ActiveROM, 0, sizeof(ActiveROM));
+
+    //setup offline storage
+    save_mutex = SDL_CreateMutex();
+    EM_ASM(
+        // Make a directory other than '/'
+        FS.mkdir('/saved');
+        // Then mount with IDBFS type
+        FS.mount(IDBFS, {}, '/saved');
+
+        // Then sync
+        FS.syncfs(true, function (err) {
+            assert(!err);
+            //if(err) console.error("error on IDBFS sync");
+        });
+
+        window.addEventListener("beforeunload", function (event) {
+            //sync the IDBFS saves before unload
+            FS.syncfs(function (err) {
+                assert(!err);
+            });
+        });
+    );
+
+    srand(time(NULL));
+
+    printf("melonDS " MELONDS_VERSION "\n");
+    printf(MELONDS_URL "\n");
+
+    Platform::Init(0, nullptr);
+
+    //QApplication melon(argc, argv);
+    //melon.setWindowIcon(QIcon(":/melon-icon"));
+
+    // http://stackoverflow.com/questions/14543333/joystick-wont-work-using-sdl
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+
+    if (SDL_Init(SDL_INIT_HAPTIC) < 0)
+    {
+        printf("SDL couldn't init rumble\n");
+    }
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
+    {
+        //QMessageBox::critical(NULL, "melonDS", "SDL shat itself :(");
+        printf("SDL shat itself :(\n");
+        return 1;
+    }
+
+    SDL_JoystickEventState(SDL_ENABLE);
+
+    Config::Load();
+
+#define SANITIZE(var, min, max)  { var = std::clamp(var, min, max); }
+    SANITIZE(Config::ConsoleType, 0, 1);
+    SANITIZE(Config::_3DRenderer, 0, 1);
+    SANITIZE(Config::ScreenVSyncInterval, 1, 20);
+    SANITIZE(Config::GL_ScaleFactor, 1, 16);
+    SANITIZE(Config::AudioVolume, 0, 256);
+    SANITIZE(Config::MicInputType, 0, 3);
+    SANITIZE(Config::ScreenRotation, 0, 3);
+    SANITIZE(Config::ScreenGap, 0, 500);
+    SANITIZE(Config::ScreenLayout, 0, 3);
+    SANITIZE(Config::ScreenSizing, 0, 5);
+    SANITIZE(Config::ScreenAspectTop, 0, 4);
+    SANITIZE(Config::ScreenAspectBot, 0, 4);
+#undef SANITIZE
+
+    //check_required_files();
+    EM_ASM( setTimeout(function(){ Module.ccall('check_required_files'); }, 500); );
     return 0;
 }

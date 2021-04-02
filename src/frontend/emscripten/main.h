@@ -23,6 +23,8 @@ void onMousePress(SDL_MouseButtonEvent* event);
 void onMouseRelease(SDL_MouseButtonEvent* event);
 void onMouseMove(SDL_MouseMotionEvent* event);
 
+int startEmuMain();
+
 class ScreenPanelGL
 {
     float screenMatrix[Frontend::MaxScreenTransforms][6];
