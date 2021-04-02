@@ -1044,6 +1044,46 @@ extern "C"
         return 0;
     }
 
+    int onChangeScreenRotation(int rot)
+    {
+        Config::ScreenRotation = rot;
+
+        panelGL->setupScreenLayout();
+        return 0;
+    }
+
+    int onChangeScreenGap(int gap)
+    {
+        Config::ScreenGap = gap;
+
+        panelGL->setupScreenLayout();
+        return 0;
+    }
+
+    int onChangeScreenLayout(int layout)
+    {
+        Config::ScreenLayout = layout;
+
+        panelGL->setupScreenLayout();
+        return 0;
+    }
+
+    int onChangeScreenSwap(int checked)
+    {
+        Config::ScreenSwap = checked;
+
+        panelGL->setupScreenLayout();
+        return 0;
+    }
+
+    int onChangeScreenSizing(int sizing)
+    {
+        Config::ScreenSizing = sizing;
+
+        panelGL->setupScreenLayout();
+        return 0;
+    }
+
 #define BIOS_7 1 << 0
 #define BIOS_9 1 << 1
 #define FIRMWARE 1 << 2
@@ -1346,7 +1386,27 @@ int startEmuMain()
                 filebrowser.click();
             }
         }
+
+        function IntCombo(element, func) {
+            let combo = document.getElementById(element);
+            if(combo) {
+                combo.onchange = function() {
+                    Module.ccall(func, 'number', ['number'], [combo.selectedIndex]);
+                }
+            }
+        }
+
+        IntCombo('rotation', 'onChangeScreenRotation');
+        IntCombo('gap', 'onChangeScreenGap');
+        IntCombo('layout', 'onChangeScreenLayout');
+        IntCombo('sizing', 'onChangeScreenSizing');
         
+        let check_swap = document.getElementById('swap');
+        if(check_swap) {
+            check_swap.onchange = function() {
+                Module.ccall('onChangeScreenSwap', 'number', ['number'], [check_swap.checked]);
+            }
+        }
     );
 
 
