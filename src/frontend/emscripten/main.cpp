@@ -94,6 +94,8 @@ bool hasOGL = true;
 SDL_mutex* save_mutex;
 bool syncRequired = false;
 
+int screenScale = 2;
+
 void audioCallback(void* data, Uint8* stream, int len)
 {
     //return;
@@ -246,6 +248,8 @@ void EmuThread::deinitOpenGL()
     //delete oglSurface;
 }
 
+//#define OGL_EXPERIMENTAL
+
 void main_loop()
 {
     SDL_Event event;
@@ -283,7 +287,7 @@ void main_loop()
                         // SDL_Log("Window %d resized to %dx%d",
                         //         event->window.windowID, event->window.data1,
                         //         event->window.data2);
-                        panelGL->setupScreenLayout();
+                        //panelGL->setupScreenLayout();
                         break;
                 }
                 break;
@@ -299,17 +303,10 @@ void main_loop()
     //panelGL->paintGL();
 
     //SDL_Delay(1000);
-}
 
-void EmuThread::start()
-{
-    emscripten_set_main_loop(main_loop, 0, 0);
-
-    emuRun();
-    //run();
-    _thread = new std::thread( [this] { this->run(); } );
-    _thread->detach();
-    
+#ifdef OGL_EXPERIMENTAL
+    emuThread->frame();
+#endif
 }
 
 int LoadROMFile(const char* file)
@@ -335,9 +332,14 @@ int LoadROMFile(const char* file)
     return -1;
 }
 
-void EmuThread::run()
+void EmuThread::start()
 {
-    //bool hasOGL = mainWindow->hasOGL;
+    emscripten_set_main_loop(main_loop, 0, 0);
+
+    emuRun();
+    //run();
+
+
     u32 mainScreenPos[3];
 
     NDS::Init();
@@ -394,10 +396,76 @@ void EmuThread::run()
         //emuThread->emuRun();
     }
 
+    _thread = new std::thread( [this] { this->run(); } );
+    _thread->detach();
+    
+}
+
+void EmuThread::run()
+{
+    //bool hasOGL = mainWindow->hasOGL;
+//     u32 mainScreenPos[3];
+
+//     NDS::Init();
+
+//     mainScreenPos[0] = 0;
+//     mainScreenPos[1] = 0;
+//     mainScreenPos[2] = 0;
+//     autoScreenSizing = 0;
+
+//     videoSettingsDirty = false;
+//     videoSettings.Soft_Threaded = Config::Threaded3D != 0;
+//     videoSettings.GL_ScaleFactor = Config::GL_ScaleFactor;
+
+// #ifdef OGLRENDERER_ENABLED
+//     if (hasOGL)
+//     {
+//         SDL_GL_MakeCurrent(mainWindow, oglContext);
+//         //oglContext->makeCurrent(oglSurface);
+//         videoRenderer = Config::_3DRenderer;
+//     }
+//     else
+// #endif
+//     {
+//         videoRenderer = 0;
+//     }
+
+//     GPU::InitRenderer(videoRenderer);
+//     GPU::SetRenderSettings(videoRenderer, videoSettings);
+
+//     Input::Init();
+
+//     u32 nframes = 0;
+//     double perfCountsSec = 1.0 / SDL_GetPerformanceFrequency();
+//     double lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
+//     double frameLimitError = 0.0;
+//     double lastMeasureTime = lastTime;
+
+//     char melontitle[100];
+
+
+//     //const char* file = "rom.nds";
+//     const char* file = ActiveROM;
+    
+//     //LoadROM(const u8 *romdata, u32 romlength, const char *archivefilename, const char *romfilename, const char *sramfilename, int slot)
+//     //FILE* romData = Platform::OpenFile(file, const char* mode, bool mustexist)
+    
+    
+//     // int res = Frontend::LoadROM(file, Frontend::ROMSlot_NDS);
+//     int res = LoadROMFile(file);
+//     if (res != Frontend::Load_OK)
+//     {
+//         printf("Rom load failed, error %d\n", res);
+//         return;
+//         //emuThread->emuRun();
+//     }
+
+#ifndef OGL_EXPERIMENTAL
     while (EmuRunning != 0)
     {
         frame();
     }
+#endif
 
     // EmuStatus = 0;
 
@@ -567,6 +635,7 @@ void EmuThread::frame()
 
         bool fastforward = Input::HotkeyDown(HK_FastForward);
 
+#ifndef OGL_EXPERIMENTAL
         if (Config::AudioSync && (!fastforward) && audioDevice)
         {
            //SDL_LockMutex(audioSyncLock);
@@ -578,6 +647,7 @@ void EmuThread::frame()
            }
            //SDL_UnlockMutex(audioSyncLock);
         }
+#endif
 
         double frametimeStep = nlines / (60.0 * 263.0);
 
@@ -733,14 +803,61 @@ void ScreenPanelGL::screenSetupLayout(int w, int h)
     numScreens = Frontend::GetScreenTransforms(screenMatrix[0], screenKind);
 }
 
+struct scr_size
+{
+    int x, y;
+    scr_size(int _x, int _y) : x(_x), y(_y) { }
+};
+
+scr_size screenGetMinSize(int factor = 1)
+{
+    bool isHori = (Config::ScreenRotation == 1 || Config::ScreenRotation == 3);
+    int gap = Config::ScreenGap;
+
+    int w = 256 * factor;
+    int h = 192 * factor;
+
+    if (Config::ScreenLayout == 0) // natural
+    {
+        if (isHori)
+            return scr_size(h+gap+h, w);
+        else
+            return scr_size(w, h+gap+h);
+    }
+    else if (Config::ScreenLayout == 1) // vertical
+    {
+        if (isHori)
+            return scr_size(h, w+gap+w);
+        else
+            return scr_size(w, h+gap+h);
+    }
+    else if (Config::ScreenLayout == 2) // horizontal
+    {
+        if (isHori)
+            return scr_size(h+gap+h, w);
+        else
+            return scr_size(w+gap+w, h);
+    }
+    else // hybrid
+    {
+        if (isHori)
+            return scr_size(h+gap+h, 3*w +(4*gap) / 3);
+        else
+            return scr_size(3*w +(4*gap) / 3, h+gap+h);
+    }
+}
+
 void ScreenPanelGL::setupScreenLayout()
 {
-    int w, h;
-    SDL_GetWindowSize(mainWindow, &w, &h);
+    //int w, h;
+    //SDL_GetWindowSize(mainWindow, &w, &h);
+    //screenSetupLayout(w, h);
+    
+    scr_size size = screenGetMinSize(screenScale);
     //int w = Config::WindowWidth;
     //int h = Config::WindowHeight;
-
-    screenSetupLayout(w, h);
+    SDL_SetWindowSize(mainWindow, size.x, size.y);
+    screenSetupLayout(size.x, size.y);
 }
 
 EM_BOOL fullscreenchange_callback(int eventType, const EmscriptenFullscreenChangeEvent *e, void *userData)
@@ -1009,6 +1126,7 @@ void onMouseMove(SDL_MouseMotionEvent* event)
     NDS::TouchScreen(x, y);
 }
 
+
 //https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
 extern "C"
 {
@@ -1044,6 +1162,19 @@ extern "C"
         return 0;
     }
 
+    int onChangeAudioVolume(int volume)
+    {
+        Config::AudioVolume = volume;
+        return 0;
+    }
+
+    int onChangeScreenSize(int idx)
+    {
+        screenScale = idx + 1;
+        panelGL->setupScreenLayout();
+        return 0;
+    }
+
     int onChangeScreenRotation(int rot)
     {
         Config::ScreenRotation = rot;
@@ -1075,12 +1206,16 @@ extern "C"
         panelGL->setupScreenLayout();
         return 0;
     }
+    
+    int onChangeScreenFiltering(int filter)
+    {
+        Config::ScreenFilter = filter;
+        return 0;
+    }
 
     int onChangeScreenSizing(int sizing)
     {
         Config::ScreenSizing = sizing;
-
-        panelGL->setupScreenLayout();
         return 0;
     }
 
@@ -1396,15 +1531,24 @@ int startEmuMain()
             }
         }
 
+        IntCombo('size', 'onChangeScreenSize');
         IntCombo('rotation', 'onChangeScreenRotation');
         IntCombo('gap', 'onChangeScreenGap');
         IntCombo('layout', 'onChangeScreenLayout');
-        IntCombo('sizing', 'onChangeScreenSizing');
-        
+        IntCombo('filtering', 'onChangeScreenFiltering');
+        //IntCombo('sizing', 'onChangeScreenSizing');
+
         let check_swap = document.getElementById('swap');
         if(check_swap) {
             check_swap.onchange = function() {
                 Module.ccall('onChangeScreenSwap', 'number', ['number'], [check_swap.checked]);
+            }
+        }
+
+        let slider_audio = document.getElementById('volume');
+        if(slider_audio) {
+            slider_audio.onchange = function() {
+                Module.ccall('onChangeAudioVolume', 'number', ['number'], [slider_audio.value]);
             }
         }
     );
