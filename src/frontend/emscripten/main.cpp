@@ -344,7 +344,7 @@ void EmuThread::start()
     //run();
 
 
-    u32 mainScreenPos[3];
+    //u32 mainScreenPos[3];
 
     NDS::Init();
 
@@ -375,13 +375,14 @@ void EmuThread::start()
 
     Input::Init();
 
-    u32 nframes = 0;
-    double perfCountsSec = 1.0 / SDL_GetPerformanceFrequency();
-    double lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
-    double frameLimitError = 0.0;
-    double lastMeasureTime = lastTime;
+    nframes = 0;
+    perfCountsSec = 1.0 / SDL_GetPerformanceFrequency();
+    //perfCountsSec = 1.0 / 1000000000.0;
+    lastTime = SDL_GetPerformanceCounter() * perfCountsSec;
+    frameLimitError = 0.0;
+    lastMeasureTime = lastTime;
 
-    char melontitle[100];
+    //char melontitle[100];
 
 
     //const char* file = "rom.nds";
@@ -684,6 +685,7 @@ void EmuThread::frame()
         {
             double time = SDL_GetPerformanceCounter() * perfCountsSec;
             double dt = time - lastMeasureTime;
+            //printf("time %u\n", SDL_GetPerformanceCounter());
             lastMeasureTime = time;
 
             u32 fps = round(nframes / dt);

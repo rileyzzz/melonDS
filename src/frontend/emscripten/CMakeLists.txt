@@ -46,6 +46,8 @@ if(EMSCRIPTEN)
     # -s ALLOW_MEMORY_GROWTH=1
     #-s USE_PTHREADS=1 -pthread --shared-memory --no-check-features -Wl
 
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    
     #debug
     #set(EM_FLAGS "-lidbfs.js -g -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_sync_check\", \"_triggerFullscreen\", \"_check_required_files\", \"_onChangeAudioVolume\", \"_onChangeScreenSize\", \"_onChangeScreenRotation\", \"_onChangeScreenGap\", \"_onChangeScreenLayout\", \"_onChangeScreenSwap\", \"_onChangeScreenFiltering\", \"_onChangeScreenSizing\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --preload-file /workspace/melonDS/firmware@/")
     #fast

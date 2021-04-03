@@ -134,6 +134,9 @@ endif()
 
 #emscripten options and other fun stuff
 if(EMSCRIPTEN)
+
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
     #debug
     #set(EM_CORE_FLAGS "-s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread") # -Wl --shared-memory
     #fast
