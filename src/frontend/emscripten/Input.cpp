@@ -3,6 +3,10 @@
 #include "Input.h"
 #include "PlatformConfig.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
 
 namespace Input
 {
@@ -44,6 +48,16 @@ void OpenJoystick()
 
     if (JoystickID >= num)
         JoystickID = 0;
+
+    emscripten_sample_gamepad_data();
+    for(int i = 0; i < num; i++)
+    {
+        EmscriptenGamepadEvent event;
+        emscripten_get_gamepad_status(i, &event);
+        
+        if(strcmp(event.mapping, "standard") == 0)
+            JoystickID = i;
+    }
 
     Joystick = SDL_JoystickOpen(JoystickID);
 }
@@ -188,6 +202,13 @@ void Process()
         JoystickID = Config::JoystickID;
         OpenJoystick();
     }
+
+    //printf("%d joystick buttons\n", SDL_JoystickNumButtons(Joystick));
+    // for(int i = 0; i < SDL_JoystickNumButtons(Joystick); i++)
+    // {
+    //     if(SDL_JoystickGetButton(Joystick, i))
+    //         printf("joystick button pressed %d\n", i);
+    // }
 
     JoyInputMask = 0xFFF;
     for (int i = 0; i < 12; i++)

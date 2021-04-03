@@ -292,6 +292,10 @@ void main_loop()
                 }
                 break;
             }
+
+            case SDL_JOYBUTTONDOWN:
+                printf("joystick %d\n", event.jbutton.button);
+                break;
         }
     }
     panelGL->paintGL();
