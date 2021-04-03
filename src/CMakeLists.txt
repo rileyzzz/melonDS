@@ -138,11 +138,12 @@ if(EMSCRIPTEN)
     #set(EM_CORE_FLAGS "-s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES2=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread") # -Wl --shared-memory
     #fast
     # -s USE_REGAL=1 -s FULL_ES2=1 -fno-exceptions  -s OFFSCREEN_FRAMEBUFFER=1
-    set(EM_CORE_FLAGS "-fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread")
+    set(EM_CORE_FLAGS "-flto -fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread")
     #set_target_properties(core PROPERTIES LINK_FLAGS ${EM_CORE_FLAGS})
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${EM_CORE_FLAGS}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EM_CORE_FLAGS}")
 
-    set_target_properties(core PROPERTIES COMPILE_FLAGS "-g0 -O3")
+    set_target_properties(core PROPERTIES LINK_FLAGS "-g0 -O3 -flto")
+    set_target_properties(core PROPERTIES COMPILE_FLAGS "-g0 -O3 -flto")
 endif()

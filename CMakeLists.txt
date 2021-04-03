@@ -67,12 +67,17 @@ detect_architecture("__i386__" x86)
 detect_architecture("__arm__" ARM)
 detect_architecture("__aarch64__" ARM64)
 
-option(ENABLE_LTO "Enable link-time optimization" OFF)
+option(ENABLE_LTO "Enable link-time optimization" ON)
 #if (CMAKE_BUILD_TYPE STREQUAL Release)
 	#option(ENABLE_LTO "Enable link-time optimization" ON)
 #else()
 	#option(ENABLE_LTO "Enable link-time optimization" OFF)
 #endif()
+
+option(ENABLE_JIT "Enable x64 JIT recompiler" OFF)
+if (ENABLE_JIT)
+	add_definitions(-DJIT_ENABLED -D__aarch64__)
+endif()
 
 option(ENABLE_OGLRENDERER "Enable OpenGL renderer" ON)
 
