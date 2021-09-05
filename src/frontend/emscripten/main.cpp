@@ -1434,7 +1434,9 @@ int startEmuMain()
                 FS.close(stream);
 
                 console.log("Load complete.");
-                var ptr  = allocate(intArrayFromString(file.name), 'i8', ALLOC_NORMAL);
+                //var ptr  = allocate(intArrayFromString(file.name), 'i8', ALLOC_NORMAL);
+                var ptr  = allocate(intArrayFromString(file.name), ALLOC_NORMAL);
+
                 Module.ccall('file_drag', // name of C function
                     'number', // return type
                     ['string'], // argument types
