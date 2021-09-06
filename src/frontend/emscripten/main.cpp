@@ -311,6 +311,9 @@ void main_loop()
 #ifdef OGL_EXPERIMENTAL
     emuThread->frame();
 #endif
+
+
+    emuThread->frame();
 }
 
 int LoadROMFile(const char* file)
@@ -338,7 +341,7 @@ int LoadROMFile(const char* file)
 
 void EmuThread::start()
 {
-    emscripten_set_main_loop(main_loop, 0, 0);
+    emscripten_set_main_loop(main_loop, 60, 0);
 
     emuRun();
     //run();
@@ -401,9 +404,9 @@ void EmuThread::start()
         //emuThread->emuRun();
     }
 
-    _thread = new std::thread( [this] { this->run(); } );
-    _thread->detach();
-    
+    //_thread = new std::thread( [this] { this->run(); } );
+    //_thread->detach();
+    //run();
 }
 
 void EmuThread::run()
@@ -465,12 +468,12 @@ void EmuThread::run()
 //         //emuThread->emuRun();
 //     }
 
-#ifndef OGL_EXPERIMENTAL
-    while (EmuRunning != 0)
-    {
-        frame();
-    }
-#endif
+// #ifndef OGL_EXPERIMENTAL
+//     while (EmuRunning != 0)
+//     {
+//         frame();
+//     }
+// #endif
 
     // EmuStatus = 0;
 
@@ -564,7 +567,7 @@ void EmuThread::frame()
         }
 
         // microphone input
-        micProcess();
+        //micProcess();
 
         // auto screen layout
         if (Config::ScreenSizing == 3)
@@ -1320,7 +1323,25 @@ extern "C"
 
     int renderTick()
     {
-        
+        emuThread->frame();
+
+        return 0;
+        // Platform::Semaphore_Wait(Sema_RenderStart);
+        // if (!RenderThreadRunning) return;
+
+        // RenderThreadRendering = true;
+        // if (FrameIdentical)
+        // {
+        //     Platform::Semaphore_Post(Sema_ScanlineCount, 192);
+        // }
+        // else
+        // {
+        //     ClearBuffers();
+        //     RenderPolygons(true, &RenderPolygonRAM[0], RenderNumPolygons);
+        // }
+
+        // Platform::Semaphore_Post(Sema_RenderDone);
+        // RenderThreadRendering = false;
     }
 }
 

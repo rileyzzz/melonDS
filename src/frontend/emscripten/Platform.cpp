@@ -108,6 +108,11 @@ FILE* OpenLocalFile(const char* path, const char* mode)
 
 Thread* Thread_Create(std::function<void()> func)
 {
+#define METACADE
+#ifdef METACADE
+    return nullptr;
+#endif
+
     std::thread* t = new std::thread(func);
     //QThread* t = QThread::create(func);
     //t->start();
@@ -116,6 +121,9 @@ Thread* Thread_Create(std::function<void()> func)
 
 void Thread_Free(Thread* thread)
 {
+    if(thread == nullptr)
+        return;
+
     std::thread* t = (std::thread*) thread;
     //t->terminate();
     delete t;
@@ -123,6 +131,9 @@ void Thread_Free(Thread* thread)
 
 void Thread_Wait(Thread* thread)
 {
+    if(thread == nullptr)
+        return;
+
     ((std::thread*) thread)->join();
 }
 

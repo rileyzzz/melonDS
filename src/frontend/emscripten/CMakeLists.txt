@@ -41,7 +41,8 @@ set(EPOXY_LIBRARY_DIRS ../../../empoxy/build/src)
 #emscripten options and other fun stuff
 if(EMSCRIPTEN)
     message("emscripten epic stuff")
-    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    #set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    set(CMAKE_EXECUTABLE_SUFFIX ".js")
     
     # -s ALLOW_MEMORY_GROWTH=1
     #-s USE_PTHREADS=1 -pthread --shared-memory --no-check-features -Wl
@@ -59,18 +60,21 @@ if(EMSCRIPTEN)
     #set(EM_FLAGS "-flto -lidbfs.js -fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_sync_check\", \"_triggerFullscreen\", \"_check_required_files\", \"_onChangeAudioVolume\", \"_onChangeScreenSize\", \"_onChangeScreenRotation\", \"_onChangeScreenGap\", \"_onChangeScreenLayout\", \"_onChangeScreenSwap\", \"_onChangeScreenFiltering\", \"_onChangeScreenSizing\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --preload-file /home/riley/melonDS/melonDS/firmware@/")
     
     #metacade
-    set(EM_FLAGS "-flto -ffast-math -lidbfs.js -fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_sync_check\", \"_triggerFullscreen\", \"_check_required_files\", \"_onChangeAudioVolume\", \"_onChangeScreenSize\", \"_onChangeScreenRotation\", \"_onChangeScreenGap\", \"_onChangeScreenLayout\", \"_onChangeScreenSwap\", \"_onChangeScreenFiltering\", \"_onChangeScreenSizing\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --embed-file /home/riley/melonDS/melonDS/firmware@/")
-    #set(EM_FLAGS "-flto -ffast-math -lidbfs.js -fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_sync_check\", \"_triggerFullscreen\", \"_check_required_files\", \"_onChangeAudioVolume\", \"_onChangeScreenSize\", \"_onChangeScreenRotation\", \"_onChangeScreenGap\", \"_onChangeScreenLayout\", \"_onChangeScreenSwap\", \"_onChangeScreenFiltering\", \"_onChangeScreenSizing\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --embed-file /home/riley/melonDS/melonDS/firmware@/")
+    #set(EM_FLAGS "-flto -ffast-math -lidbfs.js -fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s USE_PTHREADS=1 -pthread -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_sync_check\", \"_triggerFullscreen\", \"_check_required_files\", \"_onChangeAudioVolume\", \"_onChangeScreenSize\", \"_onChangeScreenRotation\", \"_onChangeScreenGap\", \"_onChangeScreenLayout\", \"_onChangeScreenSwap\", \"_onChangeScreenFiltering\", \"_onChangeScreenSizing\", \"_renderTick\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --embed-file /home/riley/melonDS/melonDS/firmware@/")
+    set(EM_FLAGS "-flto -ffast-math -lidbfs.js -fno-rtti -g0 -O3 -s DISABLE_EXCEPTION_CATCHING=1 -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_sync_check\", \"_triggerFullscreen\", \"_check_required_files\", \"_onChangeAudioVolume\", \"_onChangeScreenSize\", \"_onChangeScreenRotation\", \"_onChangeScreenGap\", \"_onChangeScreenLayout\", \"_onChangeScreenSwap\", \"_onChangeScreenFiltering\", \"_onChangeScreenSizing\", \"_renderTick\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --embed-file /home/riley/melonDS/melonDS/firmware@/")
     
-    #set(EM_FLAGS "${EM_FLAGS} -s LEGACY_VM_SUPPORT=1 --memory-init-file 0") #  -s WASM=0 -s HEADLESS=1
+    #metacade debug
+    #set(EM_FLAGS "-ffast-math -lidbfs.js -g3 -O0 -s STACK_OVERFLOW_CHECK=1 -s DEMANGLE_SUPPORT=1 -s ASSERTIONS=1 -s INITIAL_MEMORY=512MB -s USE_BOOST_HEADERS=1 -s MAX_WEBGL_VERSION=2 -s USE_REGAL=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_SDL=2 -s LLD_REPORT_UNDEFINED -s EXPORTED_FUNCTIONS='[\"_main\", \"_file_drag\", \"_sync_check\", \"_triggerFullscreen\", \"_check_required_files\", \"_onChangeAudioVolume\", \"_onChangeScreenSize\", \"_onChangeScreenRotation\", \"_onChangeScreenGap\", \"_onChangeScreenLayout\", \"_onChangeScreenSwap\", \"_onChangeScreenFiltering\", \"_onChangeScreenSizing\", \"_renderTick\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' --embed-file /home/riley/melonDS/melonDS/firmware@/")
+    
+    set(EM_FLAGS "${EM_FLAGS} -s LEGACY_VM_SUPPORT=1 -s SINGLE_FILE=1 --memory-init-file 0 -s HEADLESS=1") #  -s WASM=0 -s HEADLESS=1
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${EM_FLAGS}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EM_FLAGS}")
 
     set_target_properties(melonDS PROPERTIES LINK_FLAGS "-g0 -O3 -flto -ffast-math")
-    #set_target_properties(melonDS PROPERTIES LINK_FLAGS "-g3 -O3 -flto")
+    #set_target_properties(melonDS PROPERTIES LINK_FLAGS "-g3 -O0 -flto")
     set_target_properties(melonDS PROPERTIES COMPILE_FLAGS "-g0 -O3 -flto -ffast-math -s USE_BOOST_HEADERS=1")
-    #set_target_properties(melonDS PROPERTIES COMPILE_FLAGS "-g3 -O3 -flto -s USE_BOOST_HEADERS=1")
+    #set_target_properties(melonDS PROPERTIES COMPILE_FLAGS "-g3 -O0 -flto -s USE_BOOST_HEADERS=1")
 endif()
 
 #target_include_directories(melonDS PRIVATE ${SDL2_INCLUDE_DIRS} ${SLIRP_INCLUDE_DIRS} ${LIBARCHIVE_INCLUDE_DIRS})
