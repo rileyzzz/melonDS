@@ -1316,6 +1316,12 @@ extern "C"
 
         return 0;
     }
+
+
+    int renderTick()
+    {
+        
+    }
 }
 
 int startEmuMain()
