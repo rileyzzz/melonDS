@@ -64,6 +64,10 @@ FILE* OpenFile(const char* path, const char* mode, bool mustexist)
 {
     printf("opening file %s\n", path);
     std::filesystem::path f(path);
+
+    if(!std::filesystem::exists(path))
+        printf("Unable to open file!\n");
+    
     if (mustexist && !std::filesystem::exists(path))
     {
         return nullptr;

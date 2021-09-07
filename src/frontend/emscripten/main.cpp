@@ -252,6 +252,7 @@ void EmuThread::deinitOpenGL()
 
 void main_loop()
 {
+    printf("main loop tick\n");
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -298,7 +299,8 @@ void main_loop()
                 break;
         }
     }
-    panelGL->paintGL();
+
+    //panelGL->paintGL();
     //emuThread->frame();
 
     //if(emuThread)
@@ -308,9 +310,9 @@ void main_loop()
 
     //SDL_Delay(1000);
 
-#ifdef OGL_EXPERIMENTAL
-    emuThread->frame();
-#endif
+// #ifdef OGL_EXPERIMENTAL
+//     emuThread->frame();
+// #endif
 
 
     emuThread->frame();
@@ -341,7 +343,7 @@ int LoadROMFile(const char* file)
 
 void EmuThread::start()
 {
-    emscripten_set_main_loop(main_loop, 60, 0);
+    //emscripten_set_main_loop(main_loop, 60, 0);
 
     emuRun();
     //run();
@@ -697,7 +699,7 @@ void EmuThread::frame()
             float fpstarget = 1.0 / frametimeStep;
 
             sprintf(melontitle, "[%d/%.0f] melonDS " MELONDS_VERSION, fps, fpstarget);
-            changeWindowTitle(melontitle);
+            //changeWindowTitle(melontitle);
         }
     }
     else
@@ -782,7 +784,7 @@ ScreenPanelGL::ScreenPanelGL()
 {
     touching = false;
 
-    initializeGL();
+    //initializeGL();
     setupScreenLayout();
 }
 
@@ -865,7 +867,7 @@ void ScreenPanelGL::setupScreenLayout()
     scr_size size = screenGetMinSize(screenScale);
     //int w = Config::WindowWidth;
     //int h = Config::WindowHeight;
-    SDL_SetWindowSize(mainWindow, size.x, size.y);
+    //SDL_SetWindowSize(mainWindow, size.x, size.y);
     screenSetupLayout(size.x, size.y);
 }
 
@@ -1295,25 +1297,25 @@ extern "C"
             missing |= FIRMWARE;
 
 
-        if(missing & BIOS_7)
-            EM_ASM( let fb = document.getElementById('bios7'); if(fb) fb.style.display = 'block'; );
-        else
-            EM_ASM( let fb = document.getElementById('bios7'); if(fb) fb.style.display = 'none'; );
+        // if(missing & BIOS_7)
+        //     EM_ASM( let fb = document.getElementById('bios7'); if(fb) fb.style.display = 'block'; );
+        // else
+        //     EM_ASM( let fb = document.getElementById('bios7'); if(fb) fb.style.display = 'none'; );
 
-        if(missing & BIOS_9)
-            EM_ASM( let fb = document.getElementById('bios9'); if(fb) fb.style.display = 'block'; );
-        else
-            EM_ASM( let fb = document.getElementById('bios9'); if(fb) fb.style.display = 'none'; );
+        // if(missing & BIOS_9)
+        //     EM_ASM( let fb = document.getElementById('bios9'); if(fb) fb.style.display = 'block'; );
+        // else
+        //     EM_ASM( let fb = document.getElementById('bios9'); if(fb) fb.style.display = 'none'; );
         
-        if(missing & FIRMWARE)
-            EM_ASM( let fb = document.getElementById('firmware'); if(fb) fb.style.display = 'block'; );
-        else
-            EM_ASM( let fb = document.getElementById('firmware'); if(fb) fb.style.display = 'none'; );
+        // if(missing & FIRMWARE)
+        //     EM_ASM( let fb = document.getElementById('firmware'); if(fb) fb.style.display = 'block'; );
+        // else
+        //     EM_ASM( let fb = document.getElementById('firmware'); if(fb) fb.style.display = 'none'; );
         
 
         if(missing == 0)
         {
-            EM_ASM( let fb = document.getElementById('needed'); if(fb) fb.style.display = 'none'; );
+            //EM_ASM( let fb = document.getElementById('needed'); if(fb) fb.style.display = 'none'; );
             startEmuMain();
         }
 
@@ -1342,6 +1344,65 @@ extern "C"
 
         // Platform::Semaphore_Post(Sema_RenderDone);
         // RenderThreadRendering = false;
+    }
+
+    uint8_t* GetFramebufferTexture(int index)
+    {
+        // for(int i = 0; i < 100; i++)
+        //     buffer[i] = 0xFF;
+        //printf("getting framebuffer texture frontbuffer %d idx %d\n", emuThread->FrontBuffer, index);
+        //return emscripten::val(256 * 192 * 4, (uint8_t*)emscripten::typed_memory_view(GPU::Framebuffer[emuThread->FrontBuffer][index]));
+        return (uint8_t*)GPU::Framebuffer[emuThread->FrontBuffer][index];
+    }
+
+    void keyPress(int scancode)
+    {
+        SDL_KeyboardEvent evt;
+        evt.keysym.scancode = (SDL_Scancode)scancode;
+        Input::KeyPress(&evt);
+    }
+
+    void keyRelease(int scancode)
+    {
+        SDL_KeyboardEvent evt;
+        evt.keysym.scancode = (SDL_Scancode)scancode;
+        Input::KeyRelease(&evt);
+    }
+
+    void mousePress(int x, int y)
+    {
+        printf("mouse press %d %d\n", x, y);
+        // if (Frontend::GetTouchCoords(x, y))
+        if (x >= 0 && x < 256 && y >= 0 && y < 192)
+        {
+            printf("touch coords %d %d\n", x, y);
+            panelGL->touching = true;
+            NDS::TouchScreen(x, y);
+        }
+    }
+
+    void mouseRelease(int x, int y)
+    {
+        if (panelGL->touching)
+        {
+            panelGL->touching = false;
+            NDS::ReleaseScreen();
+        }
+    }
+
+    void mouseMove(int x, int y)
+    {
+        if (!panelGL->touching) return;
+
+        //Frontend::GetTouchCoords(x, y);
+
+        // clamp to screen range
+        if (x < 0) x = 0;
+        else if (x > 255) x = 255;
+        if (y < 0) y = 0;
+        else if (y > 191) y = 191;
+
+        NDS::TouchScreen(x, y);
     }
 }
 
@@ -1410,191 +1471,190 @@ int startEmuMain()
     Input::OpenJoystick();
 
     //mainWindow = new MainWindow();
-    mainWindow = SDL_CreateWindow("emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    SDL_GL_SetSwapInterval(0);
-    glcontext = SDL_GL_CreateContext(mainWindow);
-    SDL_GL_MakeCurrent(mainWindow, glcontext);
-    if (glewInit() != GLEW_OK)
-    {
-        std::cout << "GLEW failed to init.\n";
-    }
-    sdl_renderer = SDL_CreateRenderer(mainWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+    //mainWindow = SDL_CreateWindow("emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Config::WindowWidth, Config::WindowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    //SDL_GL_SetSwapInterval(0);
+    //glcontext = SDL_GL_CreateContext(mainWindow);
+    // SDL_GL_MakeCurrent(mainWindow, glcontext);
+    // if (glewInit() != GLEW_OK)
+    // {
+    //     std::cout << "GLEW failed to init.\n";
+    // }
+    // sdl_renderer = SDL_CreateRenderer(mainWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 
     panelGL = new ScreenPanelGL();
 
     //SDL_SetWindowSize(mainWindow, 640, 480);
-    emscripten_set_fullscreenchange_callback("canvas", 0, 1, fullscreenchange_callback);
+    //emscripten_set_fullscreenchange_callback("canvas", 0, 1, fullscreenchange_callback);
     //emscripten_request_fullscreen("canvas", 1);
 
     emuThread = new EmuThread();
     
+    // EM_ASM(
+    //     function dragover_handler(event) {
+    //         event.preventDefault();
+    //         event.dataTransfer.dropEffect = 'move';
+    //     }
 
-    EM_ASM(
-        function dragover_handler(event) {
-            event.preventDefault();
-            event.dataTransfer.dropEffect = 'move';
-        }
+    //     var romPath = "";
+    //     function dropHandler(event) {
+    //         event.preventDefault();
+    //         //Module._file_drag();
+    //         //alert('drag event');
+    //         let loadedFiles = 0;
+    //         let maxFiles = event.dataTransfer.files.length;
 
-        var romPath = "";
-        function dropHandler(event) {
-            event.preventDefault();
-            //Module._file_drag();
-            //alert('drag event');
-            let loadedFiles = 0;
-            let maxFiles = event.dataTransfer.files.length;
+    //         //for(let i = 0; i < event.dataTransfer.files.length; i++) {
+    //         const file = event.dataTransfer.files[0];
+    //         let reader = new FileReader();
+    //         reader.readAsArrayBuffer(file);
 
-            //for(let i = 0; i < event.dataTransfer.files.length; i++) {
-            const file = event.dataTransfer.files[0];
-            let reader = new FileReader();
-            reader.readAsArrayBuffer(file);
+    //         reader.onload = function() {
+    //             let data = new Uint8Array(reader.result);
+    //             console.log("filename " + file.name);
+    //             let filename = file.name;
+    //             romPath = "" + file.name;
 
-            reader.onload = function() {
-                let data = new Uint8Array(reader.result);
-                console.log("filename " + file.name);
-                let filename = file.name;
-                romPath = "" + file.name;
+    //             let stream = FS.open(filename, 'w+');
+    //             FS.write(stream, data, 0, data.length, 0);
+    //             FS.close(stream);
 
-                let stream = FS.open(filename, 'w+');
-                FS.write(stream, data, 0, data.length, 0);
-                FS.close(stream);
+    //             console.log("Load complete.");
+    //             //var ptr  = allocate(intArrayFromString(file.name), 'i8', ALLOC_NORMAL);
+    //             var ptr  = allocate(intArrayFromString(file.name), ALLOC_NORMAL);
 
-                console.log("Load complete.");
-                //var ptr  = allocate(intArrayFromString(file.name), 'i8', ALLOC_NORMAL);
-                var ptr  = allocate(intArrayFromString(file.name), ALLOC_NORMAL);
+    //             Module.ccall('file_drag', // name of C function
+    //                 'number', // return type
+    //                 ['string'], // argument types
+    //                 [file.name]);
+    //             _free(ptr);
 
-                Module.ccall('file_drag', // name of C function
-                    'number', // return type
-                    ['string'], // argument types
-                    [file.name]);
-                _free(ptr);
+    //             //Module.ccall('file_drag');
 
-                //Module.ccall('file_drag');
+    //             console.log("Loaded file " + loadedFiles.toString() + "/" + maxFiles.toString());
+    //         };
+    //         //}
+    //         //alert("drag data " + data);
+    //     }
+    //     let em_canvas = document.getElementById('canvas');
 
-                console.log("Loaded file " + loadedFiles.toString() + "/" + maxFiles.toString());
-            };
-            //}
-            //alert("drag data " + data);
-        }
-        let em_canvas = document.getElementById('canvas');
-
-        em_canvas.addEventListener('dragover', dragover_handler, false);
-        em_canvas.addEventListener('drop', dropHandler, false);
+    //     em_canvas.addEventListener('dragover', dragover_handler, false);
+    //     em_canvas.addEventListener('drop', dropHandler, false);
         
 
-        let fs_button = document.getElementById('fullscreen');
-        if(fs_button) {
-            fs_button.onclick = function() {
-                Module.ccall('triggerFullscreen');
-            }
-        }
+    //     let fs_button = document.getElementById('fullscreen');
+    //     if(fs_button) {
+    //         fs_button.onclick = function() {
+    //             Module.ccall('triggerFullscreen');
+    //         }
+    //     }
 
-        let save_button = document.getElementById('save');
-        if(save_button) {
-            save_button.onclick = function() {
-                //sync
-                FS.syncfs(function (err) {
-                    assert(!err);
+    //     let save_button = document.getElementById('save');
+    //     if(save_button) {
+    //         save_button.onclick = function() {
+    //             //sync
+    //             FS.syncfs(function (err) {
+    //                 assert(!err);
 
-                    console.log("IDBFS synchronized.");
-                    //if(err) alert("error saving IDBFS");
-                    // Error
-                });
-            }
-        }
+    //                 console.log("IDBFS synchronized.");
+    //                 //if(err) alert("error saving IDBFS");
+    //                 // Error
+    //             });
+    //         }
+    //     }
 
-        let download_button = document.getElementById('downloadsave');
-        if(download_button) {
-            download_button.onclick = function() {
-                if(romPath !== "") {
-                    var saveFile = romPath.substr(0, romPath.lastIndexOf(".")) + ".sav";
-                    var savPath = "saved/" + saveFile;
-                    alert("download rom save " + savPath);
-                    let content = FS.readFile(savPath);
+    //     let download_button = document.getElementById('downloadsave');
+    //     if(download_button) {
+    //         download_button.onclick = function() {
+    //             if(romPath !== "") {
+    //                 var saveFile = romPath.substr(0, romPath.lastIndexOf(".")) + ".sav";
+    //                 var savPath = "saved/" + saveFile;
+    //                 alert("download rom save " + savPath);
+    //                 let content = FS.readFile(savPath);
 
-                    var a = document.createElement('a');
-                    a.download = saveFile;
-                    a.href = URL.createObjectURL(new Blob([content], {type: 'application/octet-stream'}));
-                    a.style.display = 'none';
+    //                 var a = document.createElement('a');
+    //                 a.download = saveFile;
+    //                 a.href = URL.createObjectURL(new Blob([content], {type: 'application/octet-stream'}));
+    //                 a.style.display = 'none';
 
-                    document.body.appendChild(a);
-                    a.click();
-                    setTimeout(() => {
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(a.href);
-                    }, 2000);
-                }
-            }
-        }
-        let open_button = document.getElementById('opensave');
-        let filebrowser = document.getElementById('inputsave');
-        if(filebrowser) {
-            filebrowser.addEventListener("change", function () {
-                const fileList = this.files;
-                //alert("selected " + fileList.length);
-                for (let i = 0, numFiles = fileList.length; i < numFiles; i++) {
-                    const file = fileList[i];
+    //                 document.body.appendChild(a);
+    //                 a.click();
+    //                 setTimeout(() => {
+    //                     document.body.removeChild(a);
+    //                     URL.revokeObjectURL(a.href);
+    //                 }, 2000);
+    //             }
+    //         }
+    //     }
+    //     let open_button = document.getElementById('opensave');
+    //     let filebrowser = document.getElementById('inputsave');
+    //     if(filebrowser) {
+    //         filebrowser.addEventListener("change", function () {
+    //             const fileList = this.files;
+    //             //alert("selected " + fileList.length);
+    //             for (let i = 0, numFiles = fileList.length; i < numFiles; i++) {
+    //                 const file = fileList[i];
 
-                    var savFile = "saved/" + file.name;
-                    var fr = new FileReader(); 
-                    fr.onload = function () {
-                        var data = new Uint8Array(fr.result);
-                        FS.writeFile(savFile, data);
-                        console.log("saved file " + savFile);
-                        //sync
-                        FS.syncfs(function (err) {
-                            assert(!err);
-                        });
-                    };
-                    fr.readAsArrayBuffer(file);
-                }
-            }, false);
-        }
-        if(open_button && filebrowser) {
-            open_button.onclick = function() {
-                filebrowser.click();
-            }
-        }
+    //                 var savFile = "saved/" + file.name;
+    //                 var fr = new FileReader(); 
+    //                 fr.onload = function () {
+    //                     var data = new Uint8Array(fr.result);
+    //                     FS.writeFile(savFile, data);
+    //                     console.log("saved file " + savFile);
+    //                     //sync
+    //                     FS.syncfs(function (err) {
+    //                         assert(!err);
+    //                     });
+    //                 };
+    //                 fr.readAsArrayBuffer(file);
+    //             }
+    //         }, false);
+    //     }
+    //     if(open_button && filebrowser) {
+    //         open_button.onclick = function() {
+    //             filebrowser.click();
+    //         }
+    //     }
 
-        function IntCombo(element, func) {
-            let combo = document.getElementById(element);
-            if(combo) {
-                combo.onchange = function() {
-                    Module.ccall(func, 'number', ['number'], [combo.selectedIndex]);
-                }
-            }
-        }
+    //     function IntCombo(element, func) {
+    //         let combo = document.getElementById(element);
+    //         if(combo) {
+    //             combo.onchange = function() {
+    //                 Module.ccall(func, 'number', ['number'], [combo.selectedIndex]);
+    //             }
+    //         }
+    //     }
 
-        IntCombo('size', 'onChangeScreenSize');
-        IntCombo('rotation', 'onChangeScreenRotation');
-        IntCombo('gap', 'onChangeScreenGap');
-        IntCombo('layout', 'onChangeScreenLayout');
-        IntCombo('filtering', 'onChangeScreenFiltering');
-        //IntCombo('sizing', 'onChangeScreenSizing');
+    //     IntCombo('size', 'onChangeScreenSize');
+    //     IntCombo('rotation', 'onChangeScreenRotation');
+    //     IntCombo('gap', 'onChangeScreenGap');
+    //     IntCombo('layout', 'onChangeScreenLayout');
+    //     IntCombo('filtering', 'onChangeScreenFiltering');
+    //     //IntCombo('sizing', 'onChangeScreenSizing');
 
-        let check_swap = document.getElementById('swap');
-        if(check_swap) {
-            check_swap.onchange = function() {
-                Module.ccall('onChangeScreenSwap', 'number', ['number'], [check_swap.checked]);
-            }
-        }
+    //     let check_swap = document.getElementById('swap');
+    //     if(check_swap) {
+    //         check_swap.onchange = function() {
+    //             Module.ccall('onChangeScreenSwap', 'number', ['number'], [check_swap.checked]);
+    //         }
+    //     }
 
-        let slider_audio = document.getElementById('volume');
-        if(slider_audio) {
-            slider_audio.onchange = function() {
-                Module.ccall('onChangeAudioVolume', 'number', ['number'], [slider_audio.value]);
-            }
-        }
-    );
+    //     let slider_audio = document.getElementById('volume');
+    //     if(slider_audio) {
+    //         slider_audio.onchange = function() {
+    //             Module.ccall('onChangeAudioVolume', 'number', ['number'], [slider_audio.value]);
+    //         }
+    //     }
+    // );
 
 
     //keep checking for save requests in the main thread
-    EM_ASM(
-        setInterval(function() {
-            Module.ccall('sync_check');
-        }, 200);
-    );
+    // EM_ASM(
+    //     setInterval(function() {
+    //         Module.ccall('sync_check');
+    //     }, 200);
+    // );
 
 
     //emuThread->emuPause();
@@ -1640,29 +1700,31 @@ int startEmuMain()
 //https://stackoverflow.com/questions/54617194/how-to-save-files-from-c-to-browser-storage-with-emscripten
 int main(int argc, char** argv)
 {
+    printf("main called\n");
+
     memset(ActiveROM, 0, sizeof(ActiveROM));
 
     //setup offline storage
     save_mutex = SDL_CreateMutex();
-    EM_ASM(
-        // Make a directory other than '/'
-        FS.mkdir('/saved');
-        // Then mount with IDBFS type
-        FS.mount(IDBFS, {}, '/saved');
+    // EM_ASM(
+    //     // Make a directory other than '/'
+    //     FS.mkdir('/saved');
+    //     // Then mount with IDBFS type
+    //     FS.mount(IDBFS, {}, '/saved');
 
-        // Then sync
-        FS.syncfs(true, function (err) {
-            assert(!err);
-            //if(err) console.error("error on IDBFS sync");
-        });
+    //     // Then sync
+    //     FS.syncfs(true, function (err) {
+    //         assert(!err);
+    //         //if(err) console.error("error on IDBFS sync");
+    //     });
 
-        window.addEventListener("beforeunload", function (event) {
-            //sync the IDBFS saves before unload
-            FS.syncfs(function (err) {
-                assert(!err);
-            });
-        });
-    );
+    //     window.addEventListener("beforeunload", function (event) {
+    //         //sync the IDBFS saves before unload
+    //         FS.syncfs(function (err) {
+    //             assert(!err);
+    //         });
+    //     });
+    // );
 
     srand(time(NULL));
 
@@ -1675,22 +1737,24 @@ int main(int argc, char** argv)
     //melon.setWindowIcon(QIcon(":/melon-icon"));
 
     // http://stackoverflow.com/questions/14543333/joystick-wont-work-using-sdl
-    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    // SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-    if (SDL_Init(SDL_INIT_HAPTIC) < 0)
-    {
-        printf("SDL couldn't init rumble\n");
-    }
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
-    {
-        //QMessageBox::critical(NULL, "melonDS", "SDL shat itself :(");
-        printf("SDL shat itself :(\n");
-        return 1;
-    }
+    // if (SDL_Init(SDL_INIT_HAPTIC) < 0)
+    // {
+    //     printf("SDL couldn't init rumble\n");
+    // }
+    // if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
+    // {
+    //     //QMessageBox::critical(NULL, "melonDS", "SDL shat itself :(");
+    //     printf("SDL shat itself :(\n");
+    //     return 1;
+    // }
 
-    SDL_JoystickEventState(SDL_ENABLE);
+    //SDL_JoystickEventState(SDL_ENABLE);
 
     Config::Load();
+
+    printf("BIOS7 path: %s\nBIOS9 path: %s\nFirmware path: %s\n", Config::BIOS7Path, Config::BIOS9Path, Config::FirmwarePath);
 
 #define SANITIZE(var, min, max)  { var = std::clamp(var, min, max); }
     SANITIZE(Config::ConsoleType, 0, 1);
@@ -1708,6 +1772,24 @@ int main(int argc, char** argv)
 #undef SANITIZE
 
     //check_required_files();
-    EM_ASM( setTimeout(function(){ Module.ccall('check_required_files'); }, 500); );
+    //EM_ASM( setTimeout(function(){ Module.ccall('check_required_files'); }, 500); );
+
+    check_required_files();
     return 0;
+}
+
+extern "C"
+{
+    void run(const char* str)
+    {
+        // EM_ASM(
+        //     print("run called");
+        // );
+        //printf("test string %s\n", str);
+        // main(0, nullptr);
+
+        printf("Load ROM %s\n", str);
+        strcpy(ActiveROM, str);
+        emuThread->start();
+    }
 }
